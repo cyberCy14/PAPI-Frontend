@@ -161,19 +161,43 @@ export default function ProfileScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    backgroundColor: '#F7B801', paddingVertical: 12, paddingHorizontal: 20,
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
+    backgroundColor: '#F7B801', 
+    paddingVertical: 12, 
+    paddingHorizontal: 20,
+    marginTop: 40,
+    elevation:4,
   },
-  headerTitle: { fontSize: 18, fontWeight: 'bold' },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: 'bold' 
+  },
 
-  profile: { alignItems: 'center', marginVertical: 20 },
-  avatar: { width: 140, height: 140, borderRadius: 70, marginBottom: 6 },
-  avatarPlaceholder: { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' },
-  changePhoto: { fontSize: 12, color: '#555', textAlign: 'center' },
+  profile: { 
+    alignItems: 'center', 
+    marginVertical: 20 
+  },
+  avatar: { 
+    width: 140, 
+    height: 140, 
+    borderRadius: 70, 
+    marginBottom: 6 },
+    avatarPlaceholder: { 
+    backgroundColor: '#eee', 
+    justifyContent: 'center', 
+    alignItems: 'center' },
+    changePhoto: { 
+    fontSize: 12, 
+    color: '#555', 
+    textAlign: 'center' },
 
   infoContainer: { paddingHorizontal: 20 },
   fieldWrapper: { marginBottom: 20 },
-  label: { color: '#555', marginBottom: 4, fontSize: 13 },
+  bel: { color: '#555', 
+    marginBottom: 4, 
+    fontSize: 13 },
 
   input: {
     borderWidth: 1,
@@ -183,9 +207,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
+
   readOnly: { backgroundColor: '#f5f5f5' },
   inputText: { fontSize: 15, color: '#333' },
-
   datePicker: { width: '100%' },
   picker: { width: '100%' },
 });

@@ -310,7 +310,7 @@ export default function HomeScreen({ route }) {
   return (
     <KeyboardAvoidingView
       style={styles.flex}
-      behavior={Platform.select({ ios: 'padding', android: undefined })}>
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <SafeAreaView style={styles.safeArea}>
         <Image source={logo} style={styles.watermark} />
 
@@ -435,6 +435,9 @@ const styles = StyleSheet.create({
     height: 56,
     paddingHorizontal: 12,
     alignItems: 'center',
+    marginTop: 40,
+    elevation:4
+    
   },
   logoutButton: {
     backgroundColor: '#fff',

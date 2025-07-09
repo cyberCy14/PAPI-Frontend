@@ -461,6 +461,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     color: '#222',
     textAlign: 'center',
+    marginTop: 40,
   },
   section: {
     marginBottom: 28,
