@@ -5,6 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import * as Font from 'expo-font';
+import { useState } from 'react';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -20,6 +22,7 @@ import HomeScreen from './screens/HomeScreen';
 import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
+import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -79,6 +82,20 @@ function RootRedirect() {
 
 // App component with all providers
 export default function App() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      await Font.loadAsync({
+        'Sansation-Regular': require('./assets/fonts/Sansation-Regular.ttf'),
+        'Sansation-Bold': require('./assets/fonts/Sansation-Bold.ttf'),
+      });
+      setFontsLoaded(true);
+    })();
+  }, []);
+
+  if (!fontsLoaded) return null; // or a loading spinner
+
   return (
     <AuthProvider>
       <ExpenseProvider>
@@ -90,6 +107,7 @@ export default function App() {
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
               <Stack.Screen name="AppTabs" component={AppTabs} />
+              <Stack.Screen name="CustomerLoyaltyActivityScreen" component={CustomerLoyaltyActivityScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </UserProvider>
