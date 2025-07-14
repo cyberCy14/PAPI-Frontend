@@ -23,6 +23,7 @@ import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
 import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
+import StartScreen from './screens/StartScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,7 +102,8 @@ export default function App() {
       <ExpenseProvider>
         <UserProvider>
           <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="RootRedirect">
+            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Start">
+              <Stack.Screen name="Start" component={StartScreen} />
               <Stack.Screen name="RootRedirect" component={RootRedirect} />
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />

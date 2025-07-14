@@ -219,7 +219,7 @@ export default function LoyaltyScreen({ navigation }) {
           style={styles.activityIcon}
           onPress={() => navigation.navigate('CustomerLoyaltyActivityScreen')}
         >
-          <MaterialCommunityIcons name="clock-outline" size={26} color="#333" />
+          <MaterialCommunityIcons name="clock-outline" size={32} color="#061437" />
         </TouchableOpacity>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -494,16 +494,16 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    fontSize: 48,
     backgroundColor: '#FDC856',
-    paddingTop: 50,
-    paddingBottom: 25,
+    paddingTop: 45,
+    paddingBottom: 20,
     paddingHorizontal: 16,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
   },
   backButton: { marginRight: 12 },
-  headerTitle: { fontSize: 20,  color: '#333', flex: 1, textAlign: 'center', fontFamily: 'Sansation-Bold' },
+
+  headerTitle: { fontSize: 20,  color: '#061437', flex: 1, textAlign: 'center', fontFamily: 'Sansation-Bold', marginLeft: 40 },
   bellButton: { marginLeft: 12 },
   scrollContent: { padding: 16, paddingBottom: 40 },
   card: {
@@ -517,29 +517,109 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  sectionHeaderRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  sectionTitle: { fontSize: 20, fontFamily: 'Sansation-Bold', color: '#061437' },
-  addCircle: { backgroundColor: '#007AFF', borderRadius: 20, padding: 4 },
-  input: { backgroundColor: '#F7F7F7', borderRadius: 8, padding: 10, marginBottom: 8, borderWidth: 1, borderColor: '#eee', fontSize: 15 },
-  label: { color: '#555', marginBottom: 4, fontSize: 13 },
-  rulesRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  rulesCol: { flex: 1, marginRight: 8 },
-  applyButton: { backgroundColor: '#007AFF', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18, marginLeft: 8 },
-  applyButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
-  coinImageWrap: { alignItems: 'center', marginTop: 10 },
-  coinImage: { width: 80, height: 80, resizeMode: 'contain' },
-  actionRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 10 },
-  checkButton: { backgroundColor: '#4CAF50', borderRadius: 8, padding: 8, marginRight: 8 },
-  closeButton: { backgroundColor: '#FF3B30', borderRadius: 8, padding: 8 },
-  rewardItemRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
-  rewardName: { fontWeight: 'bold', fontSize: 15, color: '#222' ,  fontFamily: 'Sansation-Regular',},
-  rewardDetails: { color: '#444', fontSize: 14, marginTop: 2 , fontFamily: 'Sansation-Regular'},
-  rewardActionsRow: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  sectionHeaderRow: { flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between',
+    
+    marginBottom: 8 },
+  sectionTitle: { 
+    fontSize: 20, 
+    fontFamily: 'Sansation-Bold', 
+    color: '#061437' },
+    
+  addCircle: { 
+    backgroundColor: '#007AFF', 
+    borderRadius: 20, 
+    padding: 4 },
+
+  input: { 
+    backgroundColor: '#F7F7F7',
+     borderRadius: 8, 
+     padding: 10, 
+     marginBottom: 8, 
+     borderWidth: 1, 
+     borderColor: '#eee', 
+     fontSize: 15 },
+
+  label: { 
+    color: '#555', 
+    marginBottom: 4, 
+    fontSize: 13 },
+
+  rulesRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 10 },
+
+    rulesCol: { 
+      flex: 1, 
+      marginRight: 8 },
+
+  applyButton: {
+     backgroundColor: '#007AFF', 
+     borderRadius: 8, 
+     paddingVertical: 10, 
+     paddingHorizontal: 18, 
+     marginLeft: 8 },
+
+  applyButtonText: { 
+    color: '#fff', 
+    fontWeight: 'bold', 
+    fontSize: 15 },
+
+  coinImageWrap: { 
+    alignItems: 'center', 
+    marginTop: 10 },
+
+  coinImage: { 
+    width: 80, 
+    height: 80, 
+    resizeMode: 'contain' },
+
+  actionRow: { 
+    flexDirection: 'row', 
+    justifyContent: 'flex-end', 
+    marginBottom: 10 },
+
+  checkButton: { 
+    backgroundColor: '#4CAF50', 
+    borderRadius: 8, 
+    padding: 8, 
+    marginRight: 8 },
+
+  closeButton: { 
+    backgroundColor: '#FF3B30', 
+    borderRadius: 8, 
+    padding: 8 },
+
+  rewardItemRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'space-between', 
+    marginBottom: 10 },
+
+  rewardName: { 
+    fontWeight: 'bold', 
+    fontSize: 15, 
+    color: '#222' ,  
+    fontFamily: 'Sansation-Regular'},
+
+  rewardDetails: { 
+    color: '#444', 
+    fontSize: 14, 
+    marginTop: 2 , 
+    fontFamily: 'Sansation-Regular'},
+
+  rewardActionsRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 20 },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.3)',
     justifyContent: 'center',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   modalContent: {
     backgroundColor: '#fff',
@@ -736,7 +816,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
-  activityIcon: { marginLeft: 12 },
+  activityIcon: { marginLeft: 12, },
   sectionTitleDark: { fontSize: 19,
       color: '#1A2343', 
       marginBottom: 16, 
