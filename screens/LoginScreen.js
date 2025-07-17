@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import {
   View,
@@ -9,13 +9,71 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Animated,
+  Easing,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  // Animated label state
+  const [isEmailFocused, setIsEmailFocused] = useState(false);
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
+  const emailAnim = useRef(new Animated.Value(0)).current;
+  const passwordAnim = useRef(new Animated.Value(0)).current;
+
+  const handleEmailFocus = () => {
+    setIsEmailFocused(true);
+    animateLabel(emailAnim, 1);
+  };
+  const handleEmailBlur = () => {
+    setIsEmailFocused(false);
+    if (!email) animateLabel(emailAnim, 0);
+  };
+  const handlePasswordFocus = () => {
+    setIsPasswordFocused(true);
+    animateLabel(passwordAnim, 1);
+  };
+  const handlePasswordBlur = () => {
+    setIsPasswordFocused(false);
+    if (!password) animateLabel(passwordAnim, 0);
+  };
+  const animateLabel = (anim, toValue) => {
+    Animated.timing(anim, {
+      toValue,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const emailLabelStyle = {
+    position: 'absolute',
+    left: 18,
+    top: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
+    fontSize: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
+    color: emailAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
+    fontFamily: 'Sansation-Regular',
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
+    zIndex: 1,
+  };
+  const passwordLabelStyle = {
+    position: 'absolute',
+    left: 18,
+    top: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
+    fontSize: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
+    color: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
+    fontFamily: 'Sansation-Regular',
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
+    zIndex: 1,
+  };
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -43,23 +101,43 @@ export default function LoginScreen({ navigation }) {
       <Text style={styles.papi}>Papi</Text>
       <Text style={styles.heading}>WELCOME BACK</Text>
       <Text style={styles.subtitle}>Sign in to continue</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-        placeholderTextColor="#888"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-        placeholderTextColor="#888"
-      />
+      {/* Email input with animated label */}
+      <View style={styles.inputContainer}>
+        <Animated.Text style={emailLabelStyle}>Email</Animated.Text>
+        <TextInput
+          style={styles.input}
+          placeholder=""
+          keyboardType="email-address"
+          autoCapitalize="none"
+          value={email}
+          onChangeText={setEmail}
+          onFocus={handleEmailFocus}
+          onBlur={handleEmailBlur}
+          placeholderTextColor="#888"
+        />
+      </View>
+      {/* Password input with animated label */}
+      <View style={styles.inputContainer}>
+        <Animated.Text style={passwordLabelStyle}>Password</Animated.Text>
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.input}
+            placeholder=""
+            secureTextEntry={!passwordVisible}
+            value={password}
+            onChangeText={setPassword}
+            onFocus={handlePasswordFocus}
+            onBlur={handlePasswordBlur}
+            placeholderTextColor="#888"
+          />
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setPasswordVisible(!passwordVisible)}
+          >
+            <Ionicons name={passwordVisible ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
+          </TouchableOpacity>
+        </View>
+      </View>
       <TouchableOpacity style={styles.forgotPassword}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
@@ -105,7 +183,6 @@ const styles = StyleSheet.create({
     width: 240,
     height: 180,
     resizeMode: 'contain',
-  
     marginTop: 16,
   },
   papi: {
@@ -130,6 +207,11 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     textAlign: 'center',
   },
+  inputContainer: {
+    position: 'relative',
+    width: '100%',
+    marginBottom: 12,
+  },
   input: {
     width: '100%',
     height: 48,
@@ -137,11 +219,21 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 8,
     paddingHorizontal: 14,
-    marginBottom: 12,
+    paddingTop: 14, // Make space for label
     fontFamily: 'Sansation-Regular',
     fontSize: 15,
     color: '#061437',
     backgroundColor: '#FAFAFA',
+  },
+  passwordWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: 14,
   },
   forgotPassword: {
     alignSelf: 'flex-end',

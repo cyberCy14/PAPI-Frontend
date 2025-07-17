@@ -1,153 +1,262 @@
-// screens/SignupScreen.js
-import React, { useState, useContext } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-} from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { AuthContext } from '../context/AuthContext';
+import React, { useState, useRef } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Animated, Easing, SafeAreaView, } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function SignupScreen() {
-  const navigation = useNavigation();
-  const { signup } = useContext(AuthContext);
+export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleSignup = async () => {
-    if (!email.trim() || !password || !confirmPassword) {
-      Alert.alert('Missing fields', 'Please fill out all fields.');
-      return;
-    }
-    if (password !== confirmPassword) {
-      Alert.alert('Password mismatch', 'Passwords do not match.');
-      return;
-    }
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
 
-    setLoading(true);
-    try {
-      const credential = await signup(email.trim(), password);
-      const { uid } = credential.user;
-      navigation.navigate('Register', { uid, email: email.trim() });
-    } catch (err) {
-      Alert.alert('Signup Failed', err.message);
-    } finally {
-      setLoading(false);
+  const emailAnim = useRef(new Animated.Value(0)).current;
+  const passwordAnim = useRef(new Animated.Value(0)).current;
+  const confirmPasswordAnim = useRef(new Animated.Value(0)).current;
+
+  const handleFocus = (anim) => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  };
+
+  const handleBlur = (anim, value) => {
+    if (!value) {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }).start();
     }
   };
 
+  const getLabelStyle = (anim) => ({
+    position: 'absolute',
+    left: 15,
+    top: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [14, -10],
+    }),
+    fontSize: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [16, 14],
+    }),
+    color: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['#6B7280', '#0A0E2A'],
+    }),
+    backgroundColor: anim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['transparent','#fdf9fd'],
+    }), 
+    paddingHorizontal: 5,
+    zIndex: 1,
+  });
+
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <Text style={styles.title}>Create your Account</Text>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
+      <Text style={styles.hello}>HELLO</Text>
+      <Text style={styles.subtitle}>Create your account</Text>
 
-      <TouchableOpacity
-        style={[styles.signUpButton, loading && styles.disabledButton]}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.signUpButtonText}>Sign up</Text>
-        )}
+      <View style={styles.inputContainer}>
+        <Animated.Text style={getLabelStyle(emailAnim)}>Email</Animated.Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          onFocus={() => handleFocus(emailAnim)}
+          onBlur={() => handleBlur(emailAnim, email)}
+          keyboardType="email-address"
+        />
+      </View>
+
+      <View style={styles.inputContainer}>
+        <Animated.Text style={getLabelStyle(passwordAnim)}>Password</Animated.Text>
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.input}
+            value={password}
+            onChangeText={setPassword}
+            onFocus={() => handleFocus(passwordAnim)}
+            onBlur={() => handleBlur(passwordAnim, password)}
+            secureTextEntry={!passwordVisible}
+          />
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setPasswordVisible(!passwordVisible)}
+          >
+            <Ionicons
+              name={passwordVisible ? 'eye' : 'eye-off'}
+              size={20}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+    
+      <View style={styles.inputContainer}>
+        <Animated.Text style={getLabelStyle(confirmPasswordAnim)}>
+          Confirm Password
+        </Animated.Text>
+        <View style={styles.passwordWrapper}>
+          <TextInput
+            style={styles.input}
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            onFocus={() => handleFocus(confirmPasswordAnim)}
+            onBlur={() => handleBlur(confirmPasswordAnim, confirmPassword)}
+            secureTextEntry={!confirmPasswordVisible}
+          />
+          <TouchableOpacity
+            style={styles.eyeIcon}
+            onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+          >
+            <Ionicons
+              name={confirmPasswordVisible ? 'eye' : 'eye-off'}
+              size={20}
+              color="#6B7280"
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <TouchableOpacity style={styles.registerButton}>
+        <Text style={styles.registerText}>Register</Text>
       </TouchableOpacity>
 
-      <View style={styles.footer}>
-        <Text style={styles.prompt}>Already have an account?</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}> Sign in</Text>
-        </TouchableOpacity>
+      <View style={styles.divider}>
+        <View style={styles.line} />
+        <Text style={styles.orText}>Or continue with</Text>
+        <View style={styles.line} />
       </View>
-    </View>
+
+      <TouchableOpacity style={styles.googleButton}>
+        <Image source={require('../assets/google.png')} style={styles.googleIcon} />
+        <Text style={styles.googleText}>Google</Text>
+      </TouchableOpacity>
+      <Text style={styles.loginPrompt}>
+        Already have an account?
+        <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
+          {' '}Login
+        </Text>
+      </Text>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fdf9fd',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
     padding: 20,
   },
   logo: {
-    width: 170,
-    height: 170,
-    marginBottom: 5,
+    width: 200,
+    height: 200,
+    resizeMode: 'contain',
   },
-  title: {
-    fontSize: 24,
+  hello: {
+    fontSize: 45,
     fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 20,
+    color: '#0A0E2A',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#0A0E2A',
+    marginBottom: 50,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 15,
+    position: 'relative',
   },
   input: {
     width: '100%',
-    height: 50,
-    borderColor: '#000',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
+    borderColor: '#0A0E2A',
+    padding: 14,
+    borderRadius: 10,
+    backgroundColor: 'white',
+    fontSize: 16,
+    color: '#000',
+  },
+
+  passwordWrapper: {
+    width: '100%',
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 15,
+    top: 18,
+  },
+  registerButton: {
+    width: '100%',
+    backgroundColor: '#FDC856',
+    padding: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 20,
+    marginTop: 50,
     marginBottom: 15,
   },
-  signUpButton: {
-    backgroundColor: '#FFC107',
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 8,
-    marginTop: 10,
+  registerText: {
+    color: '#0A0E2A',
+    fontSize: 20,
+    fontWeight: '600',
   },
-  disabledButton: {
-    opacity: 0.6,
-  },
-  signUpButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  footer: {
+  divider: {
     flexDirection: 'row',
-    marginTop: 20,
+    alignItems: 'center',
+    width: '100%',
+    marginVertical: 10,
   },
-  prompt: {
-    color: '#000',
-    fontSize: 14,
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#0A0E2A',
   },
-  link: {
-    color: '#FFC107',
+  orText: {
+    marginHorizontal: 10,
+    color: '#0A0E2A',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#FDC856',
+    padding: 12,
+    borderRadius: 10,
+    width: '100%',
+    justifyContent: 'center',
+    backgroundColor: 'white',
+    marginTop: 15,
+  },
+  googleIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 10,
+    resizeMode: 'contain',
+  },
+  googleText: {
+    fontSize: 16,
+    color: '#0A0E2A',
+  },
+  loginPrompt: {
+    color: '#6B7280',
     fontSize: 14,
+    marginTop: 30,
+  },
+  loginLink: {
+    fontWeight: 'bold',
+    color: '#0A0E2A',
   },
 });

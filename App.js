@@ -1,12 +1,10 @@
-// App.js
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import * as Font from 'expo-font';
-import { useState } from 'react';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -14,6 +12,8 @@ import { ExpenseProvider } from './context/ExpenseContext';
 import { UserProvider, UserContext } from './context/UserContext';
 
 // Screens
+import SplashScreen from './screens/SplashScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import RegisterScreen from './screens/RegisterScreen';
@@ -23,7 +23,6 @@ import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
 import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
-import StartScreen from './screens/StartScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -51,7 +50,6 @@ function AppTabs() {
       <Tab.Screen name="Report" component={BudgetScreen} />
       <Tab.Screen name="Loyalty" component={LoyaltyScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      
     </Tab.Navigator>
   );
 }
@@ -102,8 +100,9 @@ export default function App() {
       <ExpenseProvider>
         <UserProvider>
           <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Start">
-              <Stack.Screen name="Start" component={StartScreen} />
+            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
+              <Stack.Screen name="Splash" component={SplashScreen} />
+              <Stack.Screen name="Welcome" component={WelcomeScreen} />
               <Stack.Screen name="RootRedirect" component={RootRedirect} />
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
