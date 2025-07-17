@@ -1,24 +1,29 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, StyleSheet, Animated, Easing} from 'react-native';
+import React, { useContext, useState, useRef } from 'react';
+import { AuthContext } from '../context/AuthContext';
+import {
+  View,
+  Text,
+  TextInput,
+  Alert,
+  StyleSheet,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  Animated,
+  Easing,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useFonts } from 'expo-font';
 
 export default function LoginScreen({ navigation }) {
-
-  // const [fontsLoaded] = useFonts({
-  //   'Sansation-Regular': require('./assets/fonts/Sansation-Regular.ttf'),
-  // });
-
-  // if (!fontsLoaded) {
-  //   return <View><Text>Loading...</Text></View>; // or splash screen
-  // }
-
-  const [passwordVisible, setPasswordVisible] = useState(false);
+  const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  // Animated label state
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  
   const emailAnim = useRef(new Animated.Value(0)).current;
   const passwordAnim = useRef(new Animated.Value(0)).current;
 
@@ -26,26 +31,18 @@ export default function LoginScreen({ navigation }) {
     setIsEmailFocused(true);
     animateLabel(emailAnim, 1);
   };
-
   const handleEmailBlur = () => {
     setIsEmailFocused(false);
-    if (!email) {
-      animateLabel(emailAnim, 0);
-    }
+    if (!email) animateLabel(emailAnim, 0);
   };
-
   const handlePasswordFocus = () => {
     setIsPasswordFocused(true);
     animateLabel(passwordAnim, 1);
   };
-
   const handlePasswordBlur = () => {
     setIsPasswordFocused(false);
-    if (!password) {
-      animateLabel(passwordAnim, 0);
-    }
+    if (!password) animateLabel(passwordAnim, 0);
   };
-
   const animateLabel = (anim, toValue) => {
     Animated.timing(anim, {
       toValue,
@@ -57,86 +54,81 @@ export default function LoginScreen({ navigation }) {
 
   const emailLabelStyle = {
     position: 'absolute',
-    left: 15,
-    top: emailAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [14, -10],
-    }),
-    fontSize: emailAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [16, 14],
-    }),
-    color: emailAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['#6B7280', '#0A0E2A'],
-    }),
-    backgroundColor: emailAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['transparent', '#fdf9fd'],
-    }),
-    paddingHorizontal: 5,
+    left: 18,
+    top: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
+    fontSize: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
+    color: emailAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
+    fontFamily: 'Sansation-Regular',
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
+    zIndex: 1,
+  };
+  const passwordLabelStyle = {
+    position: 'absolute',
+    left: 18,
+    top: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
+    fontSize: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
+    color: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
+    fontFamily: 'Sansation-Regular',
+    backgroundColor: 'white',
+    paddingHorizontal: 4,
     zIndex: 1,
   };
 
-  const passwordLabelStyle = {
-    position: 'absolute',
-    left: 15,
-    top: passwordAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [14, -10],
-    }),
-    fontSize: passwordAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: [16, 14],
-    }),
-    color: passwordAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['#6B7280', '#0A0E2A'],
-    }),
-    backgroundColor: passwordAnim.interpolate({
-      inputRange: [0, 1],
-      outputRange: ['transparent', '#fdf9fd'],
-    }),
-    paddingHorizontal: 5,
-    zIndex: 1,
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Error', 'Please enter both email and password.');
+      return;
+    }
+    setLoading(true);
+    try {
+      await login(email.trim(), password);
+      navigation.replace('AppTabs');
+    } catch (err) {
+      Alert.alert('Login Failed', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = () => {
+    // TODO: wire up Google sign-in here
   };
 
   return (
     <View style={styles.container}>
       <Image source={require('../assets/logo.png')} style={styles.logo} />
-
-      <Text style={styles.appName}>Papi</Text>
-      <Text style={styles.welcome}>WELCOME BACK</Text>
-      <Text style={styles.signInText}>Sign in to continue</Text>
-
+      <Text style={styles.papi}>Papi</Text>
+      <Text style={styles.heading}>WELCOME BACK</Text>
+      <Text style={styles.subtitle}>Sign in to continue</Text>
+      {/* Email input with animated label */}
       <View style={styles.inputContainer}>
-        <Animated.Text style={emailLabelStyle}>
-          Email
-        </Animated.Text>
+        <Animated.Text style={emailLabelStyle}>Email</Animated.Text>
         <TextInput
           style={styles.input}
+          placeholder=""
+          keyboardType="email-address"
+          autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
           onFocus={handleEmailFocus}
           onBlur={handleEmailBlur}
-          keyboardType="email-address"
-          underlineColorAndroid="transparent"
+          placeholderTextColor="#888"
         />
       </View>
-
+      {/* Password input with animated label */}
       <View style={styles.inputContainer}>
-        <Animated.Text style={passwordLabelStyle}>
-          Password
-        </Animated.Text>
+        <Animated.Text style={passwordLabelStyle}>Password</Animated.Text>
         <View style={styles.passwordWrapper}>
           <TextInput
             style={styles.input}
+            placeholder=""
+            secureTextEntry={!passwordVisible}
             value={password}
             onChangeText={setPassword}
             onFocus={handlePasswordFocus}
             onBlur={handlePasswordBlur}
-            secureTextEntry={!passwordVisible}
-            underlineColorAndroid="transparent"
+            placeholderTextColor="#888"
           />
           <TouchableOpacity
             style={styles.eyeIcon}
@@ -146,34 +138,35 @@ export default function LoginScreen({ navigation }) {
           </TouchableOpacity>
         </View>
       </View>
-
-      <View style={styles.forgotPasswordWrapper}>
-        <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')}>
-          <Text style={styles.forgotPassword}>Forgot Password?</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TouchableOpacity style={styles.loginButton}>
-        <Text style={styles.loginText}>Log in</Text>
+      <TouchableOpacity style={styles.forgotPassword}>
+        <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
-
-      <View style={styles.divider}>
+      <TouchableOpacity
+        style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+        onPress={handleLogin}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Log in</Text>
+        )}
+      </TouchableOpacity>
+      <View style={styles.orContainer}>
         <View style={styles.line} />
         <Text style={styles.orText}>Or continue with</Text>
         <View style={styles.line} />
       </View>
-
-      <TouchableOpacity style={styles.googleButton}>
+      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
         <Image source={require('../assets/google.png')} style={styles.googleIcon} />
-        <Text style={styles.googleText}>Google</Text>
+        <Text style={styles.googleButtonText}>Google</Text>
       </TouchableOpacity>
-
-      <Text style={styles.register}>
-        Don't have an account?{' '}
-        <Text style={styles.registerLink} onPress={() => navigation.navigate('Signup')}>
-          Register
-        </Text>
-      </Text>
+      <View style={styles.bottomRow}>
+        <Text style={styles.bottomText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+          <Text style={styles.registerLink}>Register</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
@@ -181,122 +174,147 @@ export default function LoginScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fdf9fd',
+    backgroundColor: '#fff',
     alignItems: 'center',
-    padding: 20,
-    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 40,
   },
   logo: {
-    width: 200,
-    height: 200,
+    width: 240,
+    height: 180,
     resizeMode: 'contain',
+    marginTop: 16,
   },
-  appName: {
-    fontSize: 30,
-    color: '#0A0E2A',
-    fontWeight: '400',
-    marginBottom: 10,
+  papi: {
+    fontFamily: 'Sansation-Regular',
+    fontSize: 22,
+    color: '#061437',
+    marginBottom: 2,
+    textAlign: 'center',
   },
-  welcome: {
-    fontSize: 45,
-    fontWeight: '800',
-    color: '#0A0E2A',
+  heading: {
+    fontFamily: 'Sansation-Bold',
+    fontSize: 35,
+    color: '#061437',
+    marginBottom: 2,
+    textAlign: 'center',
+    letterSpacing: 1,
   },
-  signInText: {
-    fontSize: 16,
-    color: '#0A0E2A',
-    marginBottom: 40,
+  subtitle: {
+    fontFamily: 'Sansation-Regular',
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 18,
+    textAlign: 'center',
   },
   inputContainer: {
-    width: '100%',
-    marginBottom: 15,
     position: 'relative',
+    width: '100%',
+    marginBottom: 12,
   },
   input: {
     width: '100%',
-    borderWidth: 1,
-    borderColor: '#0A0E2A',
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: 'white',
-    fontSize: 16,
-    color: '#000',
+    height: 48,
+    borderColor: '#E5E5E5',
+    borderWidth: 1.5,
+    borderRadius: 8,
+    paddingHorizontal: 14,
+    paddingTop: 14, // Make space for label
+    fontFamily: 'Sansation-Regular',
+    fontSize: 15,
+    color: '#061437',
+    backgroundColor: '#FAFAFA',
   },
   passwordWrapper: {
-    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
     position: 'relative',
   },
   eyeIcon: {
     position: 'absolute',
-    right: 15,
-    top: 15,
-  },
-  forgotPasswordWrapper: {
-    width: '100%',
-    alignItems: 'flex-end',
-    marginBottom: 20,
+    right: 10,
+    top: 14,
   },
   forgotPassword: {
-    color: '#6B7280',
-    fontSize: 14,
+    alignSelf: 'flex-end',
+    marginBottom: 18,
+  },
+  forgotPasswordText: {
+    color: '#888',
+    fontSize: 12,
+    fontFamily: 'Sansation-Bold',
   },
   loginButton: {
-    width: '100%',
     backgroundColor: '#FDC856',
-    padding: 14,
-    borderRadius: 10,
+    borderRadius: 8,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 5,
+    width: '100%',
+    marginBottom: 18,
   },
-  loginText: {
-    color: '#0A0E2A',
-    fontSize: 18,
-    fontWeight: '600',
+  loginButtonDisabled: {
+    opacity: 0.7,
   },
-  divider: {
+  loginButtonText: {
+    color: '#061437',
+    fontSize: 16,
+    fontFamily: 'Sansation-Bold',
+  },
+  orContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 18,
     width: '100%',
-    marginVertical: 20,
   },
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: '#0A0E2A',
+    backgroundColor: '#E5E5E5',
   },
   orText: {
-    marginHorizontal: 10,
-    color: '#0A0E2A',
+    marginHorizontal: 8,
+    color: '#888',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 13,
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FDC856',
-    padding: 12,
-    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
     width: '100%',
+    marginBottom: 18,
     justifyContent: 'center',
-    backgroundColor: 'white',
-    marginTop: 5,
-    marginBottom: 30,
   },
   googleIcon: {
-    width: 20,
-    height: 20,
+    width: 22,
+    height: 22,
     marginRight: 10,
-    resizeMode: 'contain',
   },
-  googleText: {
-    fontSize: 16,
-    color: '#0A0E2A',
+  googleButtonText: {
+    color: '#061437',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 15,
   },
-  register: {
-    color: '#6B7280',
-    fontSize: 14,
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  bottomText: {
+    color: '#888',
+    fontSize: 13,
+    fontFamily: 'Sansation-Bold',
   },
   registerLink: {
-    fontWeight: 'bold',
-    color: '#0A0E2A',
+    color: '#FDC856',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 13,
+    marginLeft: 2,
   },
 });

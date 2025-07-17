@@ -1,10 +1,10 @@
-// App.js
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import * as Font from 'expo-font';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
@@ -22,6 +22,7 @@ import HomeScreen from './screens/HomeScreen';
 import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
+import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -49,7 +50,6 @@ function AppTabs() {
       <Tab.Screen name="Report" component={BudgetScreen} />
       <Tab.Screen name="Loyalty" component={LoyaltyScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      
     </Tab.Navigator>
   );
 }
@@ -81,6 +81,19 @@ function RootRedirect() {
 
 // App component with all providers
 export default function App() {
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      await Font.loadAsync({
+        'Sansation-Regular': require('./assets/fonts/Sansation-Regular.ttf'),
+        'Sansation-Bold': require('./assets/fonts/Sansation-Bold.ttf'),
+      });
+      setFontsLoaded(true);
+    })();
+  }, []);
+
+  if (!fontsLoaded) return null; // or a loading spinner
 
   return (
     <AuthProvider>
@@ -88,13 +101,14 @@ export default function App() {
         <UserProvider>
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
-              {/* <Stack.Screen name="RootRedirect" component={RootRedirect} /> */}
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
+              <Stack.Screen name="RootRedirect" component={RootRedirect} />
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
               <Stack.Screen name="AppTabs" component={AppTabs} />
+              <Stack.Screen name="CustomerLoyaltyActivityScreen" component={CustomerLoyaltyActivityScreen} />
             </Stack.Navigator>
           </NavigationContainer>
         </UserProvider>
