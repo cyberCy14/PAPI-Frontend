@@ -1,5 +1,5 @@
 // screens/SignupScreen.js
-import React, { useState, useContext } from 'react';
+import React, { useState, useRef, useContext } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,19 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  Animated,
+  Easing,
+  SafeAreaView,
+  Dimensions,
+  Platform,
+  KeyboardAvoidingView,
+  ScrollView,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { AuthContext } from '../context/AuthContext';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function SignupScreen() {
   const navigation = useNavigation();
@@ -20,6 +30,43 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const [confirmPasswordVisible, setConfirmPasswordVisible] = useState(false);
+
+  // Animated label state
+  const emailAnim = useRef(new Animated.Value(0)).current;
+  const passwordAnim = useRef(new Animated.Value(0)).current;
+  const confirmPasswordAnim = useRef(new Animated.Value(0)).current;
+
+  const handleFocus = (anim) => {
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 200,
+      easing: Easing.out(Easing.ease),
+      useNativeDriver: false,
+    }).start();
+  };
+  const handleBlur = (anim, value) => {
+    if (!value) {
+      Animated.timing(anim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: false,
+      }).start();
+    }
+  };
+  const getLabelStyle = (anim) => ({
+    position: 'absolute',
+    left: 15,
+    top: anim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
+    fontSize: anim.interpolate({ inputRange: [0, 1], outputRange: [16, 14] }),
+    color: anim.interpolate({ inputRange: [0, 1], outputRange: ['#6B7280', '#061437'] }),
+    backgroundColor: anim.interpolate({ inputRange: [0, 1], outputRange: ['transparent','#fdf9fd'] }),
+    paddingHorizontal: 5,
+    zIndex: 1,
+    fontFamily: 'Sansation-Regular',
+  });
 
   const handleSignup = async () => {
     if (!email.trim() || !password || !confirmPassword) {
@@ -30,7 +77,6 @@ export default function SignupScreen() {
       Alert.alert('Password mismatch', 'Passwords do not match.');
       return;
     }
-
     setLoading(true);
     try {
       const credential = await signup(email.trim(), password);
@@ -44,110 +90,260 @@ export default function SignupScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} />
-      <Text style={styles.title}>Create your Account</Text>
-
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        keyboardType="email-address"
-        autoCapitalize="none"
-        value={email}
-        onChangeText={setEmail}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        secureTextEntry
-        value={password}
-        onChangeText={setPassword}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Confirm Password"
-        secureTextEntry
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-      />
-
-      <TouchableOpacity
-        style={[styles.signUpButton, loading && styles.disabledButton]}
-        onPress={handleSignup}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.signUpButtonText}>Sign up</Text>
-        )}
-      </TouchableOpacity>
-
-      <View style={styles.footer}>
-        <Text style={styles.prompt}>Already have an account?</Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.link}> Sign in</Text>
-        </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.bg}>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <View style={styles.card}>
+              <Image source={require('../assets/logo.png')} style={styles.logo} />
+              <Text style={styles.hello}>HELLO</Text>
+              <Text style={styles.subtitle}>Create your account</Text>
+              {/* Email input with animated label */}
+              <View style={styles.inputContainer}>
+                <Animated.Text style={getLabelStyle(emailAnim)}>Email</Animated.Text>
+                <TextInput
+                  style={styles.input}
+                  value={email}
+                  onChangeText={setEmail}
+                  onFocus={() => handleFocus(emailAnim)}
+                  onBlur={() => handleBlur(emailAnim, email)}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+              {/* Password input with animated label */}
+              <View style={styles.inputContainer}>
+                <Animated.Text style={getLabelStyle(passwordAnim)}>Password</Animated.Text>
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={password}
+                    onChangeText={setPassword}
+                    onFocus={() => handleFocus(passwordAnim)}
+                    onBlur={() => handleBlur(passwordAnim, password)}
+                    secureTextEntry={!passwordVisible}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setPasswordVisible(!passwordVisible)}
+                  >
+                    <Ionicons
+                      name={passwordVisible ? 'eye' : 'eye-off'}
+                      size={20}
+                      color="#6B7280"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              {/* Confirm Password input with animated label */}
+              <View style={styles.inputContainer}>
+                <Animated.Text style={getLabelStyle(confirmPasswordAnim)}>
+                  Confirm Password
+                </Animated.Text>
+                <View style={styles.passwordWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    onFocus={() => handleFocus(confirmPasswordAnim)}
+                    onBlur={() => handleBlur(confirmPasswordAnim, confirmPassword)}
+                    secureTextEntry={!confirmPasswordVisible}
+                  />
+                  <TouchableOpacity
+                    style={styles.eyeIcon}
+                    onPress={() => setConfirmPasswordVisible(!confirmPasswordVisible)}
+                  >
+                    <Ionicons
+                      name={confirmPasswordVisible ? 'eye' : 'eye-off'}
+                      size={20}
+                      color="#6B7280"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[styles.registerButton, loading && styles.disabledButton]}
+                onPress={handleSignup}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.registerText}>Register</Text>
+                )}
+              </TouchableOpacity>
+              <View style={styles.divider}>
+                <View style={styles.line} />
+                <Text style={styles.orText}>Or continue with</Text>
+                <View style={styles.line} />
+              </View>
+              <TouchableOpacity style={styles.googleButton}>
+                <Image source={require('../assets/google.png')} style={styles.googleIcon} />
+                <Text style={styles.googleText}>Google</Text>
+              </TouchableOpacity>
+              <Text style={styles.loginPrompt}>
+                Already have an account?
+                <Text style={styles.loginLink} onPress={() => navigation.navigate('LoginScreen')}>
+                  {' '}Login
+                </Text>
+              </Text>
+            </View>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
+const CARD_WIDTH = Math.min(SCREEN_WIDTH * 0.92, 370);
+
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#444245', // gray background
+  },
+  bg: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 20,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100%',
+  },
+  card: {
+    width: CARD_WIDTH,
+    backgroundColor: '#fff',
+    borderRadius: 18,
+    paddingVertical: 32,
+    paddingHorizontal: 22,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 16,
+    elevation: 4,
   },
   logo: {
-    width: 170,
-    height: 170,
-    marginBottom: 5,
+    width: 80,
+    height: 80,
+    marginBottom: 10,
+    resizeMode: 'contain',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
-    marginBottom: 20,
+  hello: {
+    fontSize: 36,
+    fontFamily: 'Sansation-Bold',
+    color: '#061437',
+    marginBottom: 2,
+    marginTop: 8,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#888',
+    fontFamily: 'Sansation-Regular',
+    marginBottom: 22,
+  },
+  inputContainer: {
+    width: '100%',
+    marginBottom: 18,
+    position: 'relative',
   },
   input: {
     width: '100%',
-    height: 50,
-    borderColor: '#000',
-    borderWidth: 1,
+    height: 48,
+    borderColor: '#061437',
+    borderWidth: 1.5,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 15,
+    paddingHorizontal: 14,
+    paddingTop: 14, // Make space for label
+    fontFamily: 'Sansation-Regular',
+    fontSize: 15,
+    color: '#061437',
+    backgroundColor: '#FAFAFA',
   },
-  signUpButton: {
-    backgroundColor: '#FFC107',
-    width: '100%',
-    height: 50,
-    justifyContent: 'center',
+  passwordWrapper: {
+    flexDirection: 'row',
     alignItems: 'center',
+    position: 'relative',
+  },
+  eyeIcon: {
+    position: 'absolute',
+    right: 10,
+    top: 14,
+  },
+  registerButton: {
+    backgroundColor: '#FDC856',
     borderRadius: 8,
-    marginTop: 10,
+    paddingVertical: 14,
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 18,
+    marginTop: 8,
   },
   disabledButton: {
-    opacity: 0.6,
+    opacity: 0.7,
   },
-  signUpButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
+  registerText: {
+    color: '#061437',
+    fontSize: 18,
+    fontFamily: 'Sansation-Bold',
   },
-  footer: {
+  divider: {
     flexDirection: 'row',
-    marginTop: 20,
+    alignItems: 'center',
+    marginBottom: 18,
+    width: '100%',
   },
-  prompt: {
-    color: '#000',
-    fontSize: 14,
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#E5E5E5',
   },
-  link: {
-    color: '#FFC107',
-    fontSize: 14,
+  orText: {
+    marginHorizontal: 8,
+    color: '#888',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 13,
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#E5E5E5',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    width: '100%',
+    marginBottom: 18,
+    justifyContent: 'center',
+  },
+  googleIcon: {
+    width: 22,
+    height: 22,
+    marginRight: 10,
+  },
+  googleText: {
+    color: '#061437',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 15,
+  },
+  loginPrompt: {
+    color: '#888',
+    fontSize: 13,
+    fontFamily: 'Sansation-Bold',
+    marginTop: 8,
+  },
+  loginLink: {
+    color: '#061437',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 13,
+    marginLeft: 2,
   },
 });
