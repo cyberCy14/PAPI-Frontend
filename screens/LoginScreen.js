@@ -12,17 +12,18 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  // Animated label state
   const [isEmailFocused, setIsEmailFocused] = useState(false);
   const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-
-  // Animated values for floating labels
   const emailAnim = useRef(new Animated.Value(0)).current;
   const passwordAnim = useRef(new Animated.Value(0)).current;
 
@@ -122,7 +123,7 @@ export default function LoginScreen({ navigation }) {
           <TextInput
             style={styles.input}
             placeholder=""
-            secureTextEntry={!isPasswordFocused}
+            secureTextEntry={!passwordVisible}
             value={password}
             onChangeText={setPassword}
             onFocus={handlePasswordFocus}
@@ -131,9 +132,9 @@ export default function LoginScreen({ navigation }) {
           />
           <TouchableOpacity
             style={styles.eyeIcon}
-            onPress={() => setIsPasswordFocused(!isPasswordFocused)}
+            onPress={() => setPasswordVisible(!passwordVisible)}
           >
-            <Ionicons name={isPasswordFocused ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
+            <Ionicons name={passwordVisible ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
       </View>
@@ -182,7 +183,6 @@ const styles = StyleSheet.create({
     width: 240,
     height: 180,
     resizeMode: 'contain',
-  
     marginTop: 16,
   },
   papi: {
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderRadius: 8,
     paddingHorizontal: 14,
-    paddingTop: 14, // Adjust padding to make space for label
+    paddingTop: 14, // Make space for label
     fontFamily: 'Sansation-Regular',
     fontSize: 15,
     color: '#061437',

@@ -7,26 +7,22 @@ export default function WelcomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Image
-        source={require('../assets/illustration.png')} // ← Update path if needed
+        source={require('../assets/illustration.png')}
         style={styles.image}
         resizeMode="contain"
       />
-
       <Text style={styles.title}>Welcome to</Text>
       <Text style={styles.brand}>Papi</Text>
       <Text style={styles.subtitle}>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
         incididunt ut labore et dolore magna aliqua.
       </Text>
-
-      <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('Login')}>
+      <TouchableOpacity style={styles.loginButton} onPress={() => navigation.navigate('LoginScreen')}>
         <Text style={styles.loginText}>Log in</Text>
       </TouchableOpacity>
-
-      <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate('Signup')}>
+      <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate('SignupScreen')}>
         <Text style={styles.registerText}>Register</Text>
       </TouchableOpacity>
-
     </SafeAreaView>
   );
 }
@@ -43,7 +39,6 @@ const styles = StyleSheet.create({
   image: {
     width: '100%',
     height: 350,
-    // marginBottom: 10,
   },
   title: {
     fontSize: 40,
@@ -66,8 +61,7 @@ const styles = StyleSheet.create({
   loginButton: {
     backgroundColor: '#fdc856',
     paddingVertical: 15,
-    // paddingHorizontal: 80,
-    width: '100%', 
+    width: '100%',
     borderRadius: 10,
     marginBottom: 15,
   },
@@ -82,7 +76,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     paddingVertical: 15,
     width: '100%',
-    // paddingHorizontal: 80,
     borderRadius: 10,
   },
   registerText: {

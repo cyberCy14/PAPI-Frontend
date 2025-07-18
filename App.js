@@ -1,5 +1,4 @@
-// App.js
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -50,7 +49,6 @@ function AppTabs() {
       <Tab.Screen name="Report" component={BudgetScreen} />
       <Tab.Screen name="Loyalty" component={LoyaltyScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
-      
     </Tab.Navigator>
   );
 }
@@ -97,7 +95,6 @@ export default function App() {
         <UserProvider>
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
-              {/* <Stack.Screen name="RootRedirect" component={RootRedirect} /> */}
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
               <Stack.Screen name="Login" component={LoginScreen} />

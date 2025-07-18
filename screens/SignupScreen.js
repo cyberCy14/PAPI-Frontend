@@ -1,4 +1,3 @@
-// screens/SignupScreen.js
 import React, { useState, useRef, useContext } from 'react';
 import {
   View,
@@ -186,7 +185,7 @@ export default function SignupScreen() {
               </TouchableOpacity>
               <Text style={styles.loginPrompt}>
                 Already have an account?
-                <Text style={styles.loginLink} onPress={() => navigation.navigate('LoginScreen')}>
+                <Text style={styles.loginLink} onPress={() => navigation.navigate('Login')}>
                   {' '}Login
                 </Text>
               </Text>
@@ -207,7 +206,7 @@ const styles = StyleSheet.create({
   },
   bg: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#fdf9fd',
     alignItems: 'center',
   },
   scrollContent: {
