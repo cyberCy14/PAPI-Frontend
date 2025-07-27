@@ -1,4 +1,3 @@
-// RegisterScreen.js
 import React, { useState, useContext } from 'react';
 import {
   SafeAreaView,
@@ -13,44 +12,91 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Picker } from '@react-native-picker/picker';
-import Icon from 'react-native-vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker'; // Import image picker
 import { UserContext } from '../context/UserContext';
 
 export default function RegisterScreen({ navigation }) {
   const { user, updateUser, loading } = useContext(UserContext);
 
   const [form, setForm] = useState({
-    name: '',
-    place: '',
-    dob: null,
-    gender: '',
-    password: '',
-    confirmPassword: '',
+    name: user.name || '',
+    place: user.place || '',
+    dob: user.dob || null,
+    gender: user.gender || '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
+  const [profileImage, setProfileImage] = useState(user.image || null); // Save selected image
+
+  // Function to launch image picker
+  const pickImage = async () => {
+    // Ask for permission
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      alert('Permission to access media library is required!');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaType.IMAGE, // updated API
+      quality: 0.7,
+    });
+
+    // New API: result.canceled and result.assets
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      setProfileImage({
+        uri: asset.uri,
+        name: asset.fileName || 'profile.jpg',
+        type: asset.type || 'image/jpeg',
+      });
+    }
+  };
+
+  // Helper to resolve image source
+  const getImageSource = (img) => {
+    if (!img) return null;
+    if (img.uri) return { uri: img.uri };
+    if (typeof img === 'string' && img.startsWith('profile_images/')) {
+      return { uri: `http://192.168.1.5:8000/storage/${img}` };
+    }
+    return null;
+  };
 
   const handleChange = (key, val) => {
-    setForm(f => ({ ...f, [key]: val }));
+    setForm((f) => ({ ...f, [key]: val }));
   };
 
   const handleRegister = async () => {
-    const { name, place, dob, gender, password, confirmPassword } = form;
-    if (!name.trim() || !place.trim() || !dob || !gender || !password || !confirmPassword) {
+    const { name, place, dob, gender } = form;
+    if (!name.trim() || !place.trim() || !dob || !gender) {
       return alert('Please fill in all fields.');
     }
-    if (password !== confirmPassword) {
-      return alert('Passwords do not match.');
+
+    // Ensure dob is a Date object
+    let dobValue = dob;
+    if (!(dob instanceof Date) && typeof dob === 'string') {
+      dobValue = new Date(dob);
     }
+
+    // Ensure image is in correct format for FormData
+    let imageValue = null;
+    if (profileImage && profileImage.uri) {
+      imageValue = {
+        uri: profileImage.uri,
+        name: profileImage.name || 'profile.jpg',
+        type: profileImage.type || 'image/jpeg',
+      };
+    }
+
     try {
       await updateUser({
-        name: name.trim(),
-        place: place.trim(),
-        dob,
-        gender,
-        password,
+        ...form,
+        dob: dobValue,
+        image: imageValue,
       });
       navigation.replace('AppTabs');
     } catch (err) {
@@ -60,16 +106,16 @@ export default function RegisterScreen({ navigation }) {
 
   if (loading || !user) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Loading profile…</Text>
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Loading profile…</Text>
       </SafeAreaView>
     );
   }
 
-  if (!user.uid) {
+  if (!user.id) {
     return (
-      <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Missing account info. Please sign up again.</Text>
+      <SafeAreaView style={styles.loadingContainer}>
+        <Text style={styles.loadingText}>Missing account info. Please sign up again.</Text>
       </SafeAreaView>
     );
   }
@@ -79,64 +125,106 @@ export default function RegisterScreen({ navigation }) {
       <StatusBar barStyle="dark-content" />
       <SafeAreaView style={styles.safeArea}>
         <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboard}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 0}
         >
           <ScrollView
             contentContainerStyle={styles.scrollContainer}
             keyboardShouldPersistTaps="handled"
           >
-            <Image source={require('../assets/logo.png')} style={styles.logo} />
-            <Text style={styles.heading}>HELLO</Text>
-            <Text style={styles.subtitle}>Create  your account</Text>
+          <Text style={styles.title}>Create Your Profile</Text>
+
+            {/* Profile Image Avatar */}
+            <TouchableOpacity style={styles.avatarContainer} onPress={pickImage}>
+              {profileImage || user.image ? (
+                <Image source={getImageSource(profileImage || user.image)} style={styles.avatar} />
+              ) : (
+                <View style={styles.placeholderAvatar}>
+                  <Ionicons name="person-outline" size={80} color="#777" />
+                </View>
+              )}
+            </TouchableOpacity>
+            <Text style={styles.instruction}>Tap avatar to select profile picture</Text>
+
+
+            {/* Name Input */}
             <View style={styles.inputWrapper}>
+              <Ionicons name="person-outline" size={24} color="#555" style={styles.icon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Email"
-                placeholderTextColor="#888"
+                placeholder="Full Name"
+                placeholderTextColor="#999"
                 value={form.name}
-                onChangeText={text => handleChange('name', text)}
+                onChangeText={(text) => handleChange('name', text)}
               />
             </View>
+
+            {/* Place of Birth */}
             <View style={styles.inputWrapper}>
+              <Ionicons name="location-outline" size={24} color="#555" style={styles.icon} />
               <TextInput
                 style={styles.textInput}
-                placeholder="Password"
-                placeholderTextColor="#888"
-                secureTextEntry
-                value={form.password}
-                onChangeText={text => handleChange('password', text)}
+                placeholder="Place of Birth"
+                placeholderTextColor="#999"
+                value={form.place}
+                onChangeText={(text) => handleChange('place', text)}
               />
             </View>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Confirm Password"
-                placeholderTextColor="#888"
-                secureTextEntry
-                value={form.confirmPassword}
-                onChangeText={text => handleChange('confirmPassword', text)}
-              />
-            </View>
+
+            {/* Date of Birth picker */}
+            <TouchableOpacity
+              style={styles.inputWrapper}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Ionicons name="calendar-outline" size={24} color="#555" style={styles.icon} />
+              <Text style={[styles.touchableText, { color: form.dob ? '#000' : '#999' }]}>
+                {form.dob ? form.dob.toDateString() : 'Select Date of Birth'}
+              </Text>
+            </TouchableOpacity>
+            <DateTimePickerModal
+              isVisible={showDatePicker}
+              mode="date"
+              date={form.dob || new Date()}
+              onConfirm={(date) => {
+                handleChange('dob', date);
+                setShowDatePicker(false);
+              }}
+              onCancel={() => setShowDatePicker(false)}
+              textColor="#000"
+            />
+
+            {/* Gender picker */}
+            <TouchableOpacity
+              style={styles.inputWrapper}
+              onPress={() => setShowGenderPicker((v) => !v)}
+            >
+              <Ionicons name="male-female-outline" size={24} color="#555" style={styles.icon} />
+              <Text style={[styles.touchableText, { color: form.gender ? '#000' : '#999' }]}>
+                {form.gender || 'Select Gender'}
+              </Text>
+            </TouchableOpacity>
+            {showGenderPicker && (
+              <View style={styles.pickerContainer}>
+                <Picker
+                  selectedValue={form.gender}
+                  onValueChange={(val) => {
+                    handleChange('gender', val);
+                    setShowGenderPicker(false);
+                  }}
+                >
+                  <Picker.Item label="Select Gender..." value="" color="#999" />
+                  <Picker.Item label="Male" value="Male" />
+                  <Picker.Item label="Female" value="Female" />
+                  <Picker.Item label="Other" value="Other" />
+                </Picker>
+              </View>
+            )}
+
+            {/* Register Button */}
             <TouchableOpacity style={styles.registerButton} onPress={handleRegister}>
               <Text style={styles.registerText}>Register</Text>
             </TouchableOpacity>
-            <View style={styles.orContainer}>
-              <View style={styles.line} />
-              <Text style={styles.orText}>Or continue with</Text>
-              <View style={styles.line} />
-            </View>
-            <TouchableOpacity style={styles.googleButton}>
-              <Image source={require('../assets/google.png')} style={styles.googleIcon} />
-              <Text style={styles.googleButtonText}>Google</Text>
-            </TouchableOpacity>
-            <View style={styles.bottomRow}>
-              <Text style={styles.bottomText}>Already have an account? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.loginLink}>Login</Text>
-              </TouchableOpacity>
-            </View>
           </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
@@ -145,117 +233,109 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  scrollContainer: { padding: 24, alignItems: 'center' },
-  logo: {
-    width: 60,
-    height: 60,
-    resizeMode: 'contain',
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F0F4F8',
+  },
+  keyboard: {
+    flex: 1,
+  },
+  scrollContainer: {
+    padding: 24,
+    paddingTop: 40,
+    alignItems: 'center',
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    marginBottom: 20,
+    color: '#333',
+    fontFamily:'Sansation-Regular'
+  },
+  avatarContainer: {
     marginBottom: 8,
-    marginTop: 16,
   },
-  heading: {
-    fontFamily: 'Sansation-Bold',
-    fontSize: 22,
-    color: '#061437',
-    marginBottom: 2,
-    textAlign: 'center',
-    letterSpacing: 1,
+  avatar: {
+    width: 160,
+    height: 160,
+    borderRadius: 60,
   },
-  subtitle: {
-    fontFamily: 'Sansation-Bold',
-    fontSize: 14,
-    color: '#888',
-    marginBottom: 18,
-    textAlign: 'center',
+  placeholderAvatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  instruction: {
+    fontSize: 12,
+    color: '#555',
+    marginBottom: 20,
   },
   inputWrapper: {
-    width: '100%',
-    backgroundColor: '#FAFAFA',
-    borderColor: '#E5E5E5',
-    borderWidth: 1.5,
-    borderRadius: 8,
-    marginBottom: 12,
-    paddingHorizontal: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 48,
-  },
-  textInput: {
-    flex: 1,
-    fontSize: 15,
-    color: '#061437',
-    fontFamily: 'Sansation-Bold',
-  },
-  registerButton: {
-    backgroundColor: '#FDC856',
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 18,
-  },
-  registerText: {
-    color: '#061437',
-    fontSize: 16,
-    fontFamily: 'Sansation-Bold',
-  },
-  orContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 18,
-    width: '100%',
-  },
-  line: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E5E5',
-  },
-  orText: {
-    marginHorizontal: 8,
-    color: '#888',
-    fontFamily: 'Sansation-Bold',
-    fontSize: 13,
-  },
-  googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#E5E5E5',
-    borderRadius: 8,
+    borderRadius: 10,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    paddingHorizontal: 24,
+    marginBottom: 16,
     width: '100%',
-    marginBottom: 18,
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  googleIcon: {
-    width: 22,
-    height: 22,
-    marginRight: 10,
+  icon: {
+    marginRight: 12,
   },
-  googleButtonText: {
-    color: '#061437',
+  textInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#222',
+    fontFamily: 'Sansation-Regular',
+  },
+  touchableText: {
+    fontSize: 16,
+  },
+  pickerContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    overflow: 'hidden',
+    width: '100%',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  registerButton: {
+    backgroundColor: '#FDC856',
+    borderRadius: 10,
+    paddingVertical: 16,
+    paddingHorizontal: 60,
+    marginTop: 24,
+    width: '100%',
+    alignItems: 'center',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  registerText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '600',
     fontFamily: 'Sansation-Bold',
-    fontSize: 15,
   },
-  bottomRow: {
-    flexDirection: 'row',
+  loadingContainer: {
+    flex:1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 8,
+    backgroundColor: '#F0F4F8',
   },
-  bottomText: {
-    color: '#888',
-    fontSize: 13,
-    fontFamily: 'Sansation-Bold',
-  },
-  loginLink: {
-    color: '#FDC856',
-    fontFamily: 'Sansation-Bold',
-    fontSize: 13,
-    marginLeft: 2,
+  loadingText: {
+    fontSize: 16,
+    color: '#555',
   },
 });
- 

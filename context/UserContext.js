@@ -1,90 +1,95 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { auth, db } from '../firebase';
-import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import React, { createContext, useState, useEffect, useContext } from 'react';
+import { AuthContext } from './AuthContext';
 
 export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
+  const { token } = useContext(AuthContext);
   const [user, setUser] = useState({
-    uid: null,
     name: '',
     phone: '',
     address: '',
     place: '',
-    dob: null,                // Date object
+    dob: null,
     gender: '',
-    image: require('../assets/avatar.png'), // default avatar
+    image: null,
   });
   const [profileExists, setProfileExists] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Fetch user profile from backend
+  const fetchUserProfile = async () => {
+    if (!token) return;
+    setLoading(true);
+    try {
+      const res = await fetch('http://192.168.1.5:8000/api/user/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      if (!res.ok) throw new Error('Failed to fetch profile');
+      const data = await res.json();
+      setUser(data.user);
+      const complete =
+        data.user.name?.trim() &&
+        data.user.place?.trim() &&
+        data.user.dob &&
+        data.user.gender?.trim();
+      setProfileExists(Boolean(complete));
+    } catch (err) {
+      setProfileExists(false);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        const uid = firebaseUser.uid;
-        const docRef = doc(db, 'users', uid);
-        const snap = await getDoc(docRef);
+    if (token) fetchUserProfile();
+  }, [token]);
 
-        if (snap.exists()) {
-          const data = snap.data();
-          const complete =
-            data.name?.trim() &&
-            data.place?.trim() &&
-            data.dob &&
-            data.gender?.trim();
-
-          setProfileExists(Boolean(complete));
-
-          setUser({
-            uid,
-            image: require('../assets/avatar.png'),
-            ...data,
-          });
-        } else {
-          setProfileExists(false);
-          setUser((prev) => ({ ...prev, uid }));
-        }
-      } else {
-        setProfileExists(false);
-        setUser({
-          uid: null,
-          name: '',
-          phone: '',
-          address: '',
-          place: '',
-          dob: null,
-          gender: '',
-          image: require('../assets/avatar.png'),
-        });
-      }
-
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
-
+  // Update user profile via backend API (supports image upload)
   const updateUser = async (updates) => {
-    if (!user.uid) throw new Error('No authenticated user to update');
+    if (!token) throw new Error('No authenticated user to update');
+    const formData = new FormData();
+    formData.append('name', updates.name?.trim() || '');
+    formData.append('place', updates.place?.trim() || '');
+    // Format dob as YYYY-MM-DD if it's a Date object
+    let dob = updates.dob;
+    if (dob instanceof Date) {
+      dob = dob.toISOString().split('T')[0];
+    }
+    formData.append('dob', dob || '');
+    formData.append('gender', updates.gender?.trim() || '');
+    if (updates.image && updates.image.uri) {
+      formData.append('image', {
+        uri: updates.image.uri,
+        name: 'profile.jpg',
+        type: 'image/jpeg',
+      });
+    }
 
-    const userRef = doc(db, 'users', user.uid);
-    await setDoc(userRef, updates, { merge: true });
-
-    const updated = { ...user, ...updates };
-    setUser(updated);
-
+    const res = await fetch('http://192.168.1.5:8000/api/user/profile', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+        // 'Content-Type' should NOT be set when using FormData in React Native
+      },
+      body: formData,
+    });
+    if (!res.ok) throw new Error('Failed to update profile');
+    const data = await res.json();
+    setUser(data.user);
     const complete =
-      updated.name?.trim() &&
-      updated.place?.trim() &&
-      updated.dob &&
-      updated.gender?.trim();
-
+      data.user.name?.trim() &&
+      data.user.place?.trim() &&
+      data.user.dob &&
+      data.user.gender?.trim();
     setProfileExists(Boolean(complete));
   };
 
   return (
-    <UserContext.Provider value={{ user, profileExists, loading, updateUser }}>
+    <UserContext.Provider value={{ user, profileExists, loading, updateUser, fetchUserProfile }}>
       {children}
     </UserContext.Provider>
   );

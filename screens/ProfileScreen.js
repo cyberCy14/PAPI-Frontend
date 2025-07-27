@@ -33,7 +33,25 @@ export default function ProfileScreen({ navigation }) {
 
   const toggleEdit = () => {
     if (isEditing) {
-      updateUser(form);
+      // Ensure dob is a Date object
+      let dobValue = form.dob;
+      if (!(dobValue instanceof Date) && typeof dobValue === 'string') {
+        dobValue = new Date(dobValue);
+      }
+      // Ensure image is in correct format for FormData
+      let imageValue = null;
+      if (form.image && form.image.uri) {
+        imageValue = {
+          uri: form.image.uri,
+          name: form.image.name || 'profile.jpg',
+          type: form.image.type || 'image/jpeg',
+        };
+      }
+      updateUser({
+        ...form,
+        dob: dobValue,
+        image: imageValue,
+      });
       Alert.alert('Profile Saved', 'Your information has been updated.');
     }
     setIsEditing(prev => !prev);
@@ -43,8 +61,19 @@ export default function ProfileScreen({ navigation }) {
     if (!isEditing) return;
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!granted) return Alert.alert('Permission needed', 'Allow access to your photos.');
-    const result = await ImagePicker.launchImageLibraryAsync({ allowsEditing: true, quality: 1 });
-    if (!result.canceled && result.assets.length > 0) handleChange('image', { uri: result.assets[0].uri });
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaType.IMAGE, // updated API
+      allowsEditing: true,
+      quality: 1,
+    });
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      const asset = result.assets[0];
+      handleChange('image', {
+        uri: asset.uri,
+        name: asset.fileName || 'profile.jpg',
+        type: asset.type || 'image/jpeg',
+      });
+    }
   };
 
   const onDateChange = (event, selectedDate) => {
@@ -56,6 +85,16 @@ export default function ProfileScreen({ navigation }) {
     iso
       ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
       : '';
+
+  // Helper to resolve image source
+  const getImageSource = (img) => {
+    if (!img) return null;
+    if (img.uri) return { uri: img.uri };
+    if (typeof img === 'string' && img.startsWith('profile_images/')) {
+      return { uri: `http://192.168.1.5:8000/storage/${img}` };
+    }
+    return null;
+  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -73,8 +112,8 @@ export default function ProfileScreen({ navigation }) {
       {/* Avatar */}
       <View style={styles.profile}>
         <TouchableOpacity onPress={pickImage} activeOpacity={isEditing ? 0.6 : 1}>
-          {form.image ? (
-            <Image source={form.image} style={styles.avatar} />
+          {form.image || user.image ? (
+            <Image source={getImageSource(form.image || user.image)} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>  
               <Ionicons name="person" size={60} color="#aaa" />

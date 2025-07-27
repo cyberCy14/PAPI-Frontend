@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function SignupScreen() {
   const navigation = useNavigation();
-  const { signup } = useContext(AuthContext);
+  const { register } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -78,9 +78,8 @@ export default function SignupScreen() {
     }
     setLoading(true);
     try {
-      const credential = await signup(email.trim(), password);
-      const { uid } = credential.user;
-      navigation.navigate('Register', { uid, email: email.trim() });
+      await register("", email.trim(), password, password);
+      navigation.replace('Register'); //trya daw balik
     } catch (err) {
       Alert.alert('Signup Failed', err.message);
     } finally {
@@ -171,7 +170,7 @@ export default function SignupScreen() {
                 {loading ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.registerText}>Register</Text>
+                  <Text style={styles.registerText}>Sign up</Text>
                 )}
               </TouchableOpacity>
               <View style={styles.divider}>
@@ -198,6 +197,8 @@ export default function SignupScreen() {
 }
 
 const CARD_WIDTH = Math.min(SCREEN_WIDTH * 0.92, 370);
+const CARD_VERTICAL_PADDING = 36;
+const CARD_HORIZONTAL_PADDING = 22;
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -206,8 +207,9 @@ const styles = StyleSheet.create({
   },
   bg: {
     flex: 1,
-    backgroundColor: '#fdf9fd',
+    backgroundColor: '#fff',
     alignItems: 'center',
+    justifyContent: 'center', // Center the card vertically
   },
   scrollContent: {
     flexGrow: 1,
@@ -219,38 +221,36 @@ const styles = StyleSheet.create({
     width: CARD_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 18,
-    paddingVertical: 32,
-    paddingHorizontal: 22,
+    paddingVertical: CARD_VERTICAL_PADDING,
+    paddingHorizontal: CARD_HORIZONTAL_PADDING,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 16,
-    elevation: 4,
+    // No shadow/elevation for flat look
   },
   logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 10,
+    width: 240,
+    height: 180,
+    marginBottom: -25, // No gap between logo and HELLO
     resizeMode: 'contain',
   },
   hello: {
-    fontSize: 36,
+    fontSize: 32,
     fontFamily: 'Sansation-Bold',
     color: '#061437',
     marginBottom: 2,
     marginTop: 8,
     letterSpacing: 1,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 15,
     color: '#888',
     fontFamily: 'Sansation-Regular',
-    marginBottom: 22,
+    marginBottom: 28,
+    textAlign: 'center',
   },
   inputContainer: {
     width: '100%',
-    marginBottom: 18,
+    marginBottom: 20,
     position: 'relative',
   },
   input: {
@@ -282,8 +282,8 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     width: '100%',
-    marginBottom: 18,
-    marginTop: 8,
+    marginBottom: 22,
+    marginTop: 10,
   },
   disabledButton: {
     opacity: 0.7,
@@ -298,6 +298,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 18,
     width: '100%',
+    marginTop: 8,
   },
   line: {
     flex: 1,
@@ -338,6 +339,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Sansation-Bold',
     marginTop: 8,
+    textAlign: 'center',
   },
   loginLink: {
     color: '#061437',

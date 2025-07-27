@@ -85,7 +85,7 @@ export default function LoginScreen({ navigation }) {
       await login(email.trim(), password);
       navigation.replace('AppTabs');
     } catch (err) {
-      Alert.alert('Login Failed', err.message);
+      Alert.alert('Login Failed', err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
