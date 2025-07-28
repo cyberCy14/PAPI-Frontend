@@ -1,0 +1,131 @@
+import { StyleSheet } from 'react-native';
+import { COLORS } from '../../constants/colors';
+
+export const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  content: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 30,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    fontFamily: 'Sansation-Bold',
+    color: COLORS.textDark,
+  },
+  card: {
+    backgroundColor: COLORS.white,
+    borderRadius: 15,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  amountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 25,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingBottom: 10,
+  },
+  currencySymbol: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    fontFamily: 'Sansation-Bold',
+    color: COLORS.textDark,
+    marginRight: 10,
+  },
+  amountInput: {
+    flex: 1,
+    fontSize: 28,
+    fontWeight: 'bold',
+    fontFamily: 'Sansation-Bold',
+    color: COLORS.textDark,
+    paddingVertical: 5,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingBottom: 10,
+  },
+  inputIcon: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    fontFamily: 'Sansation-Regular',
+    color: COLORS.textDark,
+    paddingVertical: 5,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: 'Sansation-Regular',
+    color: COLORS.textDark,
+    marginBottom: 5,
+  },
+  categoryGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 15,
+  },
+  categoryButton: {
+    width: '48%',
+    padding: 12,
+    marginBottom: 10,
+    borderRadius: 25,
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    backgroundColor: COLORS.lightGray,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  categoryButtonActive: {
+    backgroundColor: COLORS.primary,
+  },
+  categoryButtonText: {
+    fontSize: 14,
+    fontWeight: '500',
+    fontFamily: 'Sansation-Regular',
+    color: COLORS.textDark,
+  },
+  categoryButtonTextActive: {
+    color: COLORS.white,
+    fontFamily: 'Sansation-Bold',
+  },
+  saveButton: {
+    backgroundColor: COLORS.primary,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 30,
+  },
+  saveButtonText: {
+    fontFamily: 'Sansation-Bold',
+    color: COLORS.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+});
