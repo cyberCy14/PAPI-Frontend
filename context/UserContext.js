@@ -22,7 +22,7 @@ export const UserProvider = ({ children }) => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('http://192.168.1.5:8000/api/user/profile', {
+      const res = await fetch('http://192.168.1.10:8000/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -50,6 +50,7 @@ export const UserProvider = ({ children }) => {
   // Update user profile via backend API (supports image upload)
   const updateUser = async (updates) => {
     if (!token) throw new Error('No authenticated user to update');
+    console.log('updateUser called with:', updates);
     const formData = new FormData();
     formData.append('name', updates.name?.trim() || '');
     formData.append('place', updates.place?.trim() || '');
@@ -61,14 +62,18 @@ export const UserProvider = ({ children }) => {
     formData.append('dob', dob || '');
     formData.append('gender', updates.gender?.trim() || '');
     if (updates.image && updates.image.uri) {
+      console.log('Adding image to FormData:', updates.image);
       formData.append('image', {
         uri: updates.image.uri,
         name: 'profile.jpg',
         type: 'image/jpeg',
       });
+    } else {
+      console.log('No image to upload');
     }
 
-    const res = await fetch('http://192.168.1.5:8000/api/user/profile', {
+    console.log('Sending request to backend...');
+    const res = await fetch('http://192.168.1.10:8000/api/user/profile', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -77,8 +82,14 @@ export const UserProvider = ({ children }) => {
       },
       body: formData,
     });
-    if (!res.ok) throw new Error('Failed to update profile');
+    console.log('Backend response status:', res.status);
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.log('Backend error:', errorText);
+      throw new Error('Failed to update profile');
+    }
     const data = await res.json();
+    console.log('Backend response data:', data);
     setUser(data.user);
     const complete =
       data.user.name?.trim() &&

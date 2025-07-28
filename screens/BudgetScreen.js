@@ -24,10 +24,13 @@ export default function BudgetScreen() {
 
   useEffect(() => {
     const loadTotals = async () => {
-      const incRows = await fetchCategoryDetails('Income');
-      const expRows = await fetchCategoryDetails('Expense');
-      const liaRows = await fetchCategoryDetails('Liability');
-      const astRows = await fetchCategoryDetails('Asset');
+      // Fetch all categories in parallel
+      const [incRows, expRows, liaRows, astRows] = await Promise.all([
+        fetchCategoryDetails('Income'),
+        fetchCategoryDetails('Expense'),
+        fetchCategoryDetails('Liability'),
+        fetchCategoryDetails('Asset'),
+      ]);
       const sumAmounts = rows => rows.reduce((acc, item) => {
         const key = Object.keys(item.fields).find(k => k.toLowerCase().includes('amount'));
         return acc + (parseFloat(item.fields[key]) || 0);

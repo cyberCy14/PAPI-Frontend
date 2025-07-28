@@ -59,20 +59,54 @@ export default function ProfileScreen({ navigation }) {
 
   const pickImage = async () => {
     if (!isEditing) return;
+    console.log('ProfileScreen: Image picker triggered');
     const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    console.log('ProfileScreen: Permission result:', granted);
     if (!granted) return Alert.alert('Permission needed', 'Allow access to your photos.');
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.IMAGE, // updated API
-      allowsEditing: true,
-      quality: 1,
-    });
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      handleChange('image', {
-        uri: asset.uri,
-        name: asset.fileName || 'profile.jpg',
-        type: asset.type || 'image/jpeg',
+    
+    try {
+      console.log('ProfileScreen: Launching image picker...');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use old API
+        allowsEditing: true,
+        quality: 1,
       });
+      console.log('ProfileScreen: Image picker result:', result);
+      console.log('ProfileScreen: Result canceled:', result.canceled);
+      console.log('ProfileScreen: Result URI:', result.uri);
+      console.log('ProfileScreen: Result assets:', result.assets);
+      
+      // Handle both old API (result.uri) and new API (result.assets)
+      let selectedImage = null;
+      if (!result.canceled) {
+        if (result.uri) {
+          // Old API format
+          selectedImage = {
+            uri: result.uri,
+            name: 'profile.jpg',
+            type: 'image/jpeg',
+          };
+          console.log('ProfileScreen: Selected image URI (old API):', result.uri);
+        } else if (result.assets && result.assets.length > 0) {
+          // New API format
+          const asset = result.assets[0];
+          selectedImage = {
+            uri: asset.uri,
+            name: asset.fileName || 'profile.jpg',
+            type: asset.mimeType || 'image/jpeg',
+          };
+          console.log('ProfileScreen: Selected image asset (new API):', asset);
+        }
+      }
+
+      if (selectedImage) {
+        handleChange('image', selectedImage);
+        console.log('ProfileScreen: Profile image set successfully');
+      } else {
+        console.log('ProfileScreen: No image selected or picker was canceled');
+      }
+    } catch (error) {
+      console.log('ProfileScreen: Image picker error:', error);
     }
   };
 
@@ -91,7 +125,7 @@ export default function ProfileScreen({ navigation }) {
     if (!img) return null;
     if (img.uri) return { uri: img.uri };
     if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `http://192.168.1.5:8000/storage/${img}` };
+      return { uri: `http://192.168.1.10:8000/storage/${img}` };
     }
     return null;
   };

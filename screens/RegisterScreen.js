@@ -33,26 +33,58 @@ export default function RegisterScreen({ navigation }) {
 
   // Function to launch image picker
   const pickImage = async () => {
+    console.log('Image picker triggered');
     // Ask for permission
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    console.log('Permission result:', permissionResult);
     if (permissionResult.granted === false) {
       alert('Permission to access media library is required!');
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaType.IMAGE, // updated API
-      quality: 0.7,
-    });
-
-    // New API: result.canceled and result.assets
-    if (!result.canceled && result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      setProfileImage({
-        uri: asset.uri,
-        name: asset.fileName || 'profile.jpg',
-        type: asset.type || 'image/jpeg',
+    try {
+      console.log('Launching image picker...');
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use old API
+        quality: 0.7,
+        allowsEditing: true, // Add this to see if it helps
       });
+      console.log('Image picker result:', result);
+      console.log('Result canceled:', result.canceled);
+      console.log('Result assets:', result.assets);
+      console.log('Result URI:', result.uri);
+
+      // Handle both old API (result.uri) and new API (result.assets)
+      let selectedImage = null;
+      if (!result.canceled) {
+        if (result.uri) {
+          // Old API format
+          selectedImage = {
+            uri: result.uri,
+            name: 'profile.jpg',
+            type: 'image/jpeg',
+          };
+          console.log('Selected image URI (old API):', result.uri);
+        } else if (result.assets && result.assets.length > 0) {
+          // New API format
+          const asset = result.assets[0];
+          selectedImage = {
+            uri: asset.uri,
+            name: asset.fileName || 'profile.jpg',
+            type: asset.mimeType || 'image/jpeg',
+          };
+          console.log('Selected image asset (new API):', asset);
+        }
+      }
+
+      if (selectedImage) {
+        setProfileImage(selectedImage);
+        console.log('Profile image set successfully');
+      } else {
+        console.log('No image selected or picker was canceled');
+      }
+    } catch (error) {
+      console.log('Image picker error:', error);
     }
   };
 
@@ -61,7 +93,7 @@ export default function RegisterScreen({ navigation }) {
     if (!img) return null;
     if (img.uri) return { uri: img.uri };
     if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `http://192.168.1.5:8000/storage/${img}` };
+      return { uri: `http://192.168.1.10:8000/storage/${img}` };
     }
     return null;
   };
@@ -147,7 +179,6 @@ export default function RegisterScreen({ navigation }) {
             </TouchableOpacity>
             <Text style={styles.instruction}>Tap avatar to select profile picture</Text>
 
-
             {/* Name Input */}
             <View style={styles.inputWrapper}>
               <Ionicons name="person-outline" size={24} color="#555" style={styles.icon} />
@@ -178,14 +209,21 @@ export default function RegisterScreen({ navigation }) {
               onPress={() => setShowDatePicker(true)}
             >
               <Ionicons name="calendar-outline" size={24} color="#555" style={styles.icon} />
-              <Text style={[styles.touchableText, { color: form.dob ? '#000' : '#999' }]}>
-                {form.dob ? form.dob.toDateString() : 'Select Date of Birth'}
+              <Text style={[styles.touchableText, { color: form.dob ? '#000' : '#999' }]}> 
+                {form.dob ? ((() => { 
+                  const d = new Date(form.dob); 
+                  return d.toString() !== 'Invalid Date' ? d.toDateString() : 'Select Date of Birth';
+                })()) : 'Select Date of Birth'}
               </Text>
             </TouchableOpacity>
             <DateTimePickerModal
               isVisible={showDatePicker}
               mode="date"
-              date={form.dob || new Date()}
+              date={(() => {
+                if (form.dob instanceof Date) return form.dob;
+                if (typeof form.dob === 'string') return new Date(form.dob);
+                return new Date();
+              })()}
               onConfirm={(date) => {
                 handleChange('dob', date);
                 setShowDatePicker(false);

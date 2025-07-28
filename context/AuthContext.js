@@ -11,7 +11,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('Sending login request...');
-      const res = await fetch('http://192.168.1.5:8000/api/login', {
+      const res = await fetch('http://192.168.1.10:8000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, password_confirmation: password }),
@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, passwordConfirmation) => {
     try {
       console.log('Sending register request...');
-      const res = await fetch('http://192.168.1.5:8000/api/register', {
+      const res = await fetch('http://192.168.1.10:8000/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
