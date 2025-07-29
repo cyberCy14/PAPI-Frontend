@@ -4,6 +4,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { UserContext } from '../context/UserContext';
 
 const LOYALTY_BG = require('../assets/Rectangle 73.png');
+const LOYALTY_BJ = require('../assets/Rectangle 77.png');
 
 const INVITE_CARDS = [
   {
@@ -59,7 +60,7 @@ export default function LoyaltyScreen({ navigation }) {
         inviteSliderRef.current?.scrollToIndex({ index: next, animated: true });
         return next;
       });
-    }, 3000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -69,7 +70,6 @@ export default function LoyaltyScreen({ navigation }) {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-    
         <Text style={styles.headerTitle}>Loyalty</Text>
       </View>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -81,8 +81,20 @@ export default function LoyaltyScreen({ navigation }) {
               <MaterialCommunityIcons name="trophy-outline" size={36} color="#FFD700" />
             </View>
             <View style={styles.pointsWrap}>
-              <Text style={styles.balancePoints} numberOfLines={1} adjustsFontSizeToFit>{points !== null ? `${points}Pts` : <ActivityIndicator color="#fff" />}</Text>
-              <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>{nextReward !== null ? `${nextReward} points till your next reward` : ''}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('LoyaltyPoints')}>
+                <Text style={styles.balancePoints} numberOfLines={1} adjustsFontSizeToFit>
+                  {points !== null ? (
+                    <>
+                      {points} <Text style={styles.ptsLabel}>pts</Text>
+                    </>
+                  ) : (
+                    <ActivityIndicator color="#fff" />
+                  )}
+                </Text>
+              </TouchableOpacity>
+              <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>
+                {nextReward !== null ? `${nextReward} points till your next reward` : ''}
+              </Text>
             </View>
           </View>
           {/* Dashed line divider */}
@@ -116,13 +128,29 @@ export default function LoyaltyScreen({ navigation }) {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.inviteSlider}
           renderItem={({ item }) => (
-            <View style={styles.inviteCard}>
-              <Text style={styles.inviteTitle}>{item.title}</Text>
-              <Text style={styles.inviteDesc}>{item.desc}</Text>
+            <ImageBackground
+              source={LOYALTY_BJ}
+              style={styles.inviteCard}
+              imageStyle={styles.inviteCardBg}
+            >
+              <View style={styles.inviteContent}>
+                <Text style={styles.inviteTitle}>{item.title}</Text>
+                <Text style={styles.inviteDesc}>{item.desc}</Text>
+                
+              </View>
               <TouchableOpacity style={styles.inviteBtn}>
-                <Text style={styles.inviteBtnText}>{item.btn}</Text>
-              </TouchableOpacity>
-            </View>
+                  <Text style={styles.inviteBtnText}>{item.btn}</Text>
+                </TouchableOpacity>
+              {/* Pagination Dots */}
+              <View style={styles.pagination}>
+                {INVITE_CARDS.map((_, index) => (
+                  <View
+                    key={index}
+                    style={[styles.dot, inviteIndex === index ? styles.activeDot : styles.inactiveDot]}
+                  />
+                ))}
+              </View>
+            </ImageBackground>
           )}
         />
         {/* Recent Activity */}
@@ -160,15 +188,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   backButton: { marginRight: 12 },
-  headerTitle: { 
-    fontSize: 22, 
-    color: '#061437', 
-    flex: 1, 
-    textAlign: 'center', 
-    fontFamily: 'Sansation-Bold' },
+  headerTitle: {
+    fontSize: 22,
+    color: '#061437',
+    flex: 1,
+    textAlign: 'center',
+    fontFamily: 'Sansation-Bold',
+  },
   scrollContent: { padding: 16, paddingBottom: 40 },
   balanceCard: {
-    flexDirection: 'column', // Changed to column for better stacking
+    flexDirection: 'column',
     alignItems: 'center',
     borderRadius: 8,
     overflow: 'hidden',
@@ -184,8 +213,8 @@ const styles = StyleSheet.create({
     color: '#FFD700',
     fontSize: 18,
     fontFamily: 'Sansation-Bold',
-    marginTop:20,
-    marginRight:170,
+    marginTop: 20,
+    marginRight: 170,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -205,7 +234,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 20,
-    marginLeft:15,
+    marginLeft: 15,
   },
   pointsWrap: {
     flex: 1,
@@ -216,7 +245,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: 'Sansation-Bold',
     marginBottom: 0,
-    marginTop:10,
+    marginTop: 10,
     flexShrink: 1,
   },
   balanceSub: {
@@ -232,45 +261,81 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontFamily: 'Sansation-Bold',
     marginTop: 40,
-    marginRight:210,
+    marginRight: 210,
     textAlign: 'center',
   },
   inviteCard: {
-    backgroundColor: '#FDC856',
+    flexDirection: 'column',
+    alignItems: 'center',
     borderRadius: 8,
-    padding: 18,
-    marginLeft:10,
-    marginRight: 9, // Added margin for horizontal scroll
-    height:200,
-    width: 315, // Fixed width for horizontal scroll
     overflow: 'hidden',
+    height: 225,
+    width: 315,
+    padding: 18,
+    marginLeft: 5,
+    marginRight: 9,
     flexShrink: 0,
+    justifyContent: 'space-between',
+  },
+  inviteCardBg: {
+    borderRadius: 8,
+    opacity: 0.95,
+    resizeMode: 'cover',
+  },
+  inviteContent: {
+    flex: 1,
     justifyContent: 'center',
+    alignItems: 'flex-start', // Changed to left align
+    width: '100%', // Ensure full width for left alignment
   },
   inviteTitle: {
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: 'Sansation-Bold',
-    color: '#061437',
-    marginBottom: 4,
+    color: '##061437',
+   marginBottom: 5,
+    textAlign: 'left', // Left align text
+    marginBottom: 10,
   },
   inviteDesc: {
-    fontSize: 20,
+    fontSize: 24,
+    fontWeight: '400',
     fontFamily: 'Sansation-Regular',
     color: '#061437',
-    marginTop:20,
-    marginBottom: 12,
+    textAlign: 'left', // Left align text
+    marginBottom: 20,
   },
   inviteBtn: {
     backgroundColor: '#061437',
     borderRadius: 8,
     paddingVertical: 10,
     alignItems: 'center',
-    marginTop:10,
+    justifyContent: 'center',
+   
+    width: '90%',
+    marginBottom: 10,
   },
   inviteBtnText: {
     color: '#fff',
     fontFamily: 'Sansation-Bold',
     fontSize: 15,
+  },
+  pagination: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: '#000',
+  },
+  inactiveDot: {
+    backgroundColor: '#fff',
   },
   activityTitle: {
     fontSize: 17,
@@ -361,7 +426,6 @@ const styles = StyleSheet.create({
   inviteSlider: {
     paddingVertical: 2,
     marginBottom: 18,
-   
   },
   dashedLine: {
     position: 'absolute',
@@ -372,6 +436,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(255,255,255,0.7)',
     borderStyle: 'dashed',
     zIndex: 2,
-    marginBottom:15,
+    marginBottom: 15,
   },
-}); 
+});

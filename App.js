@@ -24,6 +24,8 @@ import AddTransactionScreen from './screens/AddTransactionScreen';
 import TransactionHistoryScreen from './screens/TransactionHistoryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
+import LoyaltyPointsScreen from './screens/LoyaltyPointsScreen';
+import CompanyTransactScreen from './screens/CompanyTransactScreen';
 import InsightsScreen from './screens/InsightsScreen';
 //import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
 
@@ -114,6 +116,9 @@ export default function App() {
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
               <Stack.Screen name="InsightsScreen" component={InsightsScreen} />
+              <Stack.Screen name="LoyaltyPoints" component={LoyaltyPointsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="CompanyTransact" component={CompanyTransactScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="LoyaltyScreen" component={LoyaltyScreen} />
            
             </Stack.Navigator>
           </NavigationContainer>
