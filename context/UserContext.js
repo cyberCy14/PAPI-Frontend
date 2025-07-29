@@ -22,7 +22,7 @@ export const UserProvider = ({ children }) => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('http://192.168.1.2:8000/api/user/profile', {
+      const res = await fetch('http://192.168.101.14:8000/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -73,7 +73,7 @@ export const UserProvider = ({ children }) => {
     }
 
     console.log('Sending request to backend...');
-    const res = await fetch('http://192.168.1.2:8000/api/user/profile', {
+    const res = await fetch('http://192.168.101.18:8000/api/user/profile', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,

@@ -46,11 +46,11 @@ export default function LoyaltyScreen({ navigation }) {
         setPoints(1440); // mock
         setNextReward(560); // mock
         setInviteCode('PAPI1234'); // mock
-        // setActivity([
-        //   { id: '1', type: 'earn', points: 50, desc: 'Purchased item X' },
-        //   { id: '2', type: 'earn', points: 10, desc: 'Purchased item X' },
-        //   { id: '3', type: 'redeem', points: 25, desc: 'Used points to purchase item X' },
-        // ]);
+         setActivity([
+           { id: '1', type: 'earn', points: 50, desc: 'Purchased item X' },
+           { id: '2', type: 'earn', points: 10, desc: 'Purchased item X' },
+           { id: '3', type: 'redeem', points: 25, desc: 'Used points to purchase item X' },
+         ]);
         console.log('API_BASE_URL:', API_BASE_URL);
 
       } catch (e) {
@@ -63,27 +63,27 @@ export default function LoyaltyScreen({ navigation }) {
     console.log('Recent activity from context', activity);
   }, []);
 
+//
+
+   useEffect(() => {
+     async function fetchAll(){
+      setLoading(true);
+       await refreshActivity();
+      setLoading(false);
+     }
+     fetchAll();
+     console.log('Final recent activity list:', activity);
+   }, []);
+
+   useFocusEffect(
+     useCallback(() => {
+       console.log('Final recent activity list:', activity);
+       refreshActivity();
+     }, [])
+   );
 
 
-  // useEffect(() => {
-  //   async function fetchAll(){
-  //     setLoading(true);
-  //     await refreshActivity();
-  //     setLoading(false);
-  //   }
-  //   fetchAll();
-  //   console.log('Final recent activity list:', activity);
-  // }, []);
-
-  // useFocusEffect(
-  //   useCallback(() => {
-  //     console.log('Final recent activity list:', activity);
-  //     refreshActivity();
-  //   }, [])
-  // );
-
-
-
+//
   useEffect(() => {
     const interval = setInterval(() => {
       setInviteIndex(prev => {
