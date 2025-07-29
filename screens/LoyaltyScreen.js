@@ -1,7 +1,10 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useState, useRef, useFocusEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { UserContext } from '../context/UserContext';
+import { RecentActivityContext } from '../context/RecentActivityContext';
+
+import API_BASE_URL  from '../config';
 
 const LOYALTY_BG = require('../assets/Rectangle 73.png');
 
@@ -22,15 +25,18 @@ export default function LoyaltyScreen({ navigation }) {
   const { user } = useContext(UserContext);
   const [points, setPoints] = useState(null);
   const [nextReward, setNextReward] = useState(null);
-  const [activity, setActivity] = useState([]);
+  // const [activity, setActivity] = useState([]);
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [rewards, setRewards] = useState([]);
   const inviteSliderRef = useRef(null);
   const [inviteIndex, setInviteIndex] = useState(0);
+  const { activity, loading:activityLoading, refreshActivity, updateActivity} = useContext(RecentActivityContext);
+  
 
   // Fetch loyalty data from API
   useEffect(() => {
+
     async function fetchLoyalty() {
       setLoading(true);
       try {
@@ -39,18 +45,43 @@ export default function LoyaltyScreen({ navigation }) {
         setPoints(1440); // mock
         setNextReward(560); // mock
         setInviteCode('PAPI1234'); // mock
-        setActivity([
-          { id: '1', type: 'earn', points: 50, desc: 'Purchased item X' },
-          { id: '2', type: 'earn', points: 10, desc: 'Purchased item X' },
-          { id: '3', type: 'redeem', points: 25, desc: 'Used points to purchase item X' },
-        ]);
+        // setActivity([
+        //   { id: '1', type: 'earn', points: 50, desc: 'Purchased item X' },
+        //   { id: '2', type: 'earn', points: 10, desc: 'Purchased item X' },
+        //   { id: '3', type: 'redeem', points: 25, desc: 'Used points to purchase item X' },
+        // ]);
+        console.log('API_BASE_URL:', API_BASE_URL);
+
       } catch (e) {
         // handle error
       }
       setLoading(false);
     }
     fetchLoyalty();
+
+    console.log('Recent activity from context', activity);
   }, []);
+
+
+
+  // useEffect(() => {
+  //   async function fetchAll(){
+  //     setLoading(true);
+  //     await refreshActivity();
+  //     setLoading(false);
+  //   }
+  //   fetchAll();
+  //   console.log('Final recent activity list:', activity);
+  // }, []);
+
+  // useFocusEffect(
+  //   useCallback(() => {
+  //     console.log('Final recent activity list:', activity);
+  //     refreshActivity();
+  //   }, [])
+  // );
+
+
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -82,13 +113,15 @@ export default function LoyaltyScreen({ navigation }) {
             </View>
             <View style={styles.pointsWrap}>
               <Text style={styles.balancePoints} numberOfLines={1} adjustsFontSizeToFit>{points !== null ? `${points}Pts` : <ActivityIndicator color="#fff" />}</Text>
-              <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>{nextReward !== null ? `${nextReward} points till your next reward` : ''}</Text>
+              {/* <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>{nextReward !== null ? `${nextReward} points till your next reward` : ''}</Text> */}
             </View>
           </View>
           {/* Dashed line divider */}
           <View style={styles.dashedLine} />
           <Text style={styles.balanceUserAligned}>{username}</Text>
         </ImageBackground>
+
+
         {/* Rewards Slider */}
         <FlatList
           data={rewards}
@@ -106,6 +139,8 @@ export default function LoyaltyScreen({ navigation }) {
             </View>
           )}
         />
+
+
         {/* Referral/Invite Section */}
         <FlatList
           ref={inviteSliderRef}
@@ -125,25 +160,55 @@ export default function LoyaltyScreen({ navigation }) {
             </View>
           )}
         />
+
+
         {/* Recent Activity */}
         <Text style={styles.activityTitle}>Recent Activity</Text>
+
         <View style={{ marginTop: 8 }}>
-          {activity.map(item => (
-            <View key={item.id} style={[styles.activityRow, item.type === 'earn' ? styles.activityEarn : styles.activityRedeem]}>
+        {activityLoading ? (
+          <ActivityIndicator size="small" color="#000" />
+        ) : !activity || activity.length === 0 ? (
+          <Text style={{ textAlign: 'center' }}>No recent activity.</Text>
+        ) : (
+          activity.map(item => (
+            <View
+              key={item.id}
+              style={[
+                styles.activityRow,
+                item.type === 'earn' ? styles.activityEarn : styles.activityRedeem,
+              ]}
+            >
               <View style={styles.activityLeft}>
-                <Text style={[styles.activityStatus, item.type === 'earn' ? styles.earned : styles.redeemed]}>
-                  {item.type === 'earn' ? `You earned ${item.points} points` : `You redeemed ${item.points} points`}
+                <Text
+                  style={[
+                    styles.activityStatus,
+                    item.type === 'earn' ? styles.earned : styles.redeemed,
+                  ]}
+                >
+                  {item.type === 'earn'
+                    ? `You earned ${item.points} points`
+                    : `You redeemed ${item.points} points`}
                 </Text>
-                <Text style={styles.activityDesc}>{item.desc}</Text>
+                <Text style={styles.activityDesc}>{item.desc || item.description}</Text>
               </View>
               <View style={styles.activityRight}>
-                <View style={[styles.pointsCircle, item.type === 'earn' ? styles.earnedBg : styles.redeemedBg]}>
-                  <Text style={styles.pointsText}>{item.type === 'earn' ? `+${item.points}` : `-${item.points}`}</Text>
+                <View
+                  style={[
+                    styles.pointsCircle,
+                    item.type === 'earn' ? styles.earnedBg : styles.redeemedBg,
+                  ]}
+                >
+                  <Text style={styles.pointsText}>
+                    {item.type === 'earn' ? `+${item.points}` : `-${item.points}`}
+                  </Text>
                 </View>
               </View>
             </View>
-          ))}
+          ))
+        )}
         </View>
+
       </ScrollView>
     </View>
   );
