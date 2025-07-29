@@ -4,12 +4,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
-import * as Font from 'expo-font';
+import { useFonts } from 'expo-font';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { UserProvider, UserContext } from './context/UserContext';
+import { RecentActivityProvider, RecentActivityContext } from './context/RecentActivityContext';
 
 // Screens
 import SplashScreen from './screens/SplashScreen';
@@ -20,8 +21,6 @@ import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 // import HistoryScreen from './screens/HistoryScreen'; // Removed
 import BudgetScreen from './screens/BudgetScreen';
-import AddTransactionScreen from './screens/AddTransactionScreen';
-import TransactionHistoryScreen from './screens/TransactionHistoryScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
 import LoyaltyPointsScreen from './screens/LoyaltyPointsScreen';
@@ -86,29 +85,24 @@ function RootRedirect() {
 
 // App component with all providers
 export default function App() {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
+  const [fontsLoaded] = useFonts({
+    'Sansation-Regular': require('./assets/fonts/Sansation-Regular.ttf'),
+    'Sansation-Bold': require('./assets/fonts/Sansation-Bold.ttf'),
+  });
 
-  useEffect(() => {
-    (async () => {
-      await Font.loadAsync({
-        'Sansation-Regular': require('./assets/fonts/Sansation-Regular.ttf'),
-        'Sansation-Bold': require('./assets/fonts/Sansation-Bold.ttf'),
-      });
-      setFontsLoaded(true);
-    })();
-  }, []);
-
-  if (!fontsLoaded) return null; // or a loading spinner
+  if (!fontsLoaded) {
+    return null; // Optionally, show a loading spinner here
+  }
 
   return (
     <AuthProvider>
       <ExpenseProvider>
         <UserProvider>
+          <RecentActivityProvider>
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
-              <Stack.Screen name="RootRedirect" component={RootRedirect} />
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
@@ -122,6 +116,7 @@ export default function App() {
            
             </Stack.Navigator>
           </NavigationContainer>
+          </RecentActivityProvider>
         </UserProvider>
       </ExpenseProvider>
     </AuthProvider>
