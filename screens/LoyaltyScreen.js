@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState, useRef, useFocusEffect, useCall
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { UserContext } from '../context/UserContext';
-import { RecentActivityContext } from '../context/RecentActivityContext';
+
 
 import API_BASE_URL  from '../config';
 
@@ -22,22 +22,51 @@ const INVITE_CARDS = [
   },
 ];
 
+const REWARDS_CARDS = [
+  {
+    title: 'Starbucks Rewards',
+    desc: 'Free coffee, pastries, and exclusive offers',
+    btn: 'View Rewards',
+    icon: '☕',
+  },
+  {
+    title: "McDonald's Rewards",
+    desc: 'Free meals, fries, and special deals',
+    btn: 'View Rewards',
+    icon: '🍔',
+  },
+  {
+    title: 'Target Rewards',
+    desc: 'Gift cards, discounts, and free shipping',
+    btn: 'View Rewards',
+    icon: '🎯',
+  },
+  {
+    title: 'Shell Rewards',
+    desc: 'Free car wash, gas credits, and convenience items',
+    btn: 'View Rewards',
+    icon: '⛽',
+  },
+];
+
 export default function LoyaltyScreen({ navigation }) {
   const { user } = useContext(UserContext);
   const [points, setPoints] = useState(null);
   const [nextReward, setNextReward] = useState(null);
-  // const [activity, setActivity] = useState([]);
+  const [activity, setActivity] = useState([]);
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [rewards, setRewards] = useState([]);
   const inviteSliderRef = useRef(null);
+  const rewardsSliderRef = useRef(null);
   const [inviteIndex, setInviteIndex] = useState(0);
-  const { activity, loading:activityLoading, refreshActivity, updateActivity} = useContext(RecentActivityContext);
+  const [rewardsIndex, setRewardsIndex] = useState(0);
+  // const { activity, loading:activityLoading, refreshActivity, updateActivity} = useContext(RecentActivityContext);
   
+
 
   // Fetch loyalty data from API
   useEffect(() => {
-
     async function fetchLoyalty() {
       setLoading(true);
       try {
@@ -46,44 +75,21 @@ export default function LoyaltyScreen({ navigation }) {
         setPoints(1440); // mock
         setNextReward(560); // mock
         setInviteCode('PAPI1234'); // mock
-         setActivity([
-           { id: '1', type: 'earn', points: 50, desc: 'Purchased item X' },
-           { id: '2', type: 'earn', points: 10, desc: 'Purchased item X' },
-           { id: '3', type: 'redeem', points: 25, desc: 'Used points to purchase item X' },
-         ]);
-        console.log('API_BASE_URL:', API_BASE_URL);
-
+        setActivity([
+          { id: '1', type: 'earn', points: 50, desc: 'Purchased coffee at Starbucks' },
+          { id: '2', type: 'earn', points: 25, desc: 'Bought lunch at McDonald\'s' },
+          { id: '3', type: 'redeem', points: 100, desc: 'Redeemed for free dessert' },
+          { id: '4', type: 'earn', points: 75, desc: 'Shopping at Target' },
+          { id: '5', type: 'earn', points: 30, desc: 'Gas station purchase' },
+        ]);
       } catch (e) {
         // handle error
       }
       setLoading(false);
     }
     fetchLoyalty();
-
-    console.log('Recent activity from context', activity);
   }, []);
 
-//
-
-   useEffect(() => {
-     async function fetchAll(){
-      setLoading(true);
-       await refreshActivity();
-      setLoading(false);
-     }
-     fetchAll();
-     console.log('Final recent activity list:', activity);
-   }, []);
-
-   useFocusEffect(
-     useCallback(() => {
-       console.log('Final recent activity list:', activity);
-       refreshActivity();
-     }, [])
-   );
-
-
-//
   useEffect(() => {
     const interval = setInterval(() => {
       setInviteIndex(prev => {
@@ -92,6 +98,17 @@ export default function LoyaltyScreen({ navigation }) {
         return next;
       });
     }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRewardsIndex(prev => {
+        const next = (prev + 1) % REWARDS_CARDS.length;
+        rewardsSliderRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -106,6 +123,14 @@ export default function LoyaltyScreen({ navigation }) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Loyalty Balance Card */}
         <ImageBackground source={LOYALTY_BG} style={styles.balanceCard} imageStyle={styles.balanceCardBg}>
+          {/* Removed Coin Button */}
+          {/* <TouchableOpacity 
+            style={styles.coinButton}
+            onPress={() => navigation.navigate('Rewards')}
+          >
+            <MaterialCommunityIcons name="currency-usd" size={24} color="#FFD700" />
+          </TouchableOpacity> */}
+          
           <Text style={styles.balanceLabelAbove}>Loyalty Balance</Text>
           <View style={styles.balanceRow}>
             <View style={styles.trophyWrap}>
@@ -189,15 +214,57 @@ export default function LoyaltyScreen({ navigation }) {
           )}
         />
 
+        {/* Rewards Slider */}
+        <FlatList
+          ref={rewardsSliderRef}
+          data={REWARDS_CARDS}
+          keyExtractor={(_, idx) => `rewards-${idx}`}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.rewardsInviteSlider}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Rewards')}
+            >
+              <ImageBackground
+                source={LOYALTY_BJ}
+                style={styles.inviteCard}
+                imageStyle={styles.inviteCardBg}
+              >
+                <View style={styles.inviteContent}>
+                  <View style={styles.rewardsHeader}>
+                    <Text style={styles.rewardsIcon}>{item.icon}</Text>
+                    <Text style={styles.inviteTitle}>{item.title}</Text>
+                  </View>
+                  <Text style={styles.inviteDesc}>{item.desc}</Text>
+                </View>
+                <TouchableOpacity style={styles.inviteBtn}>
+                  <Text style={styles.inviteBtnText}>{item.btn}</Text>
+                </TouchableOpacity>
+                {/* Pagination Dots */}
+                <View style={styles.pagination}>
+                  {REWARDS_CARDS.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[styles.dot, rewardsIndex === index ? styles.activeDot : styles.inactiveDot]}
+                    />
+                  ))}
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+          )}
+        />
+
 
         {/* Recent Activity */}
         <Text style={styles.activityTitle}>Recent Activity</Text>
 
         <View style={{ marginTop: 8 }}>
-        {activityLoading ? (
+        {loading ? (
           <ActivityIndicator size="small" color="#000" />
         ) : !activity || activity.length === 0 ? (
-          <Text style={{ textAlign: 'center' }}>No recent activity.</Text>
+          <Text style={{ textAlign: 'center', color: '#888' }}>No recent activity.</Text>
         ) : (
           activity.map(item => (
             <View
@@ -218,7 +285,7 @@ export default function LoyaltyScreen({ navigation }) {
                     ? `You earned ${item.points} points`
                     : `You redeemed ${item.points} points`}
                 </Text>
-                <Text style={styles.activityDesc}>{item.desc || item.description}</Text>
+                <Text style={styles.activityDesc}>{item.desc}</Text>
               </View>
               <View style={styles.activityRight}>
                 <View
@@ -268,6 +335,19 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     height: 225,
     backgroundColor: '#061437',
+    position: 'relative',
+  },
+  coinButton: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
   balanceCardBg: {
     borderRadius: 8,
@@ -492,6 +572,10 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     marginBottom: 18,
   },
+  rewardsInviteSlider: {
+    paddingVertical: 2,
+    marginBottom: 18,
+  },
   dashedLine: {
     position: 'absolute',
     left: 16,
@@ -502,5 +586,43 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     zIndex: 2,
     marginBottom: 15,
+  },
+  inviteCardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  inviteCardTitle: {
+    fontSize: 16,
+    fontFamily: 'Sansation-Bold',
+    color: '#061437',
+    marginBottom: 2,
+  },
+  inviteCardDesc: {
+    fontSize: 13,
+    fontFamily: 'Sansation-Regular',
+    color: '#444',
+  },
+  inviteCardButtonWrap: {
+    backgroundColor: '#061437',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '90%',
+  },
+  inviteCardButton: {
+    color: '#fff',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 15,
+  },
+  rewardsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  rewardsIcon: {
+    fontSize: 24,
+    marginRight: 8,
   },
 });

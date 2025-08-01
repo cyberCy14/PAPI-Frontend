@@ -22,7 +22,7 @@ export const UserProvider = ({ children }) => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('http://192.168.101.14:8000/api/user/profile', {
+      const res = await fetch('http://192.168.1.9:8000/api/user/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -44,7 +44,22 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    if (token) fetchUserProfile();
+    if (token) {
+      fetchUserProfile();
+    } else {
+      // Reset user data when token is null (logout)
+      setUser({
+        name: '',
+        phone: '',
+        address: '',
+        place: '',
+        dob: null,
+        gender: '',
+        image: null,
+      });
+      setProfileExists(false);
+      setLoading(false);
+    }
   }, [token]);
 
   // Update user profile via backend API (supports image upload)
@@ -73,7 +88,7 @@ export const UserProvider = ({ children }) => {
     }
 
     console.log('Sending request to backend...');
-    const res = await fetch('http://192.168.101.18:8000/api/user/profile', {
+    const res = await fetch('http://192.168.1.9:8000/api/user/profile', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -98,6 +113,8 @@ export const UserProvider = ({ children }) => {
       data.user.gender?.trim();
     setProfileExists(Boolean(complete));
   };
+
+
 
   return (
     <UserContext.Provider value={{ user, profileExists, loading, updateUser, fetchUserProfile }}>

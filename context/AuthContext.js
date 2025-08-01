@@ -2,8 +2,6 @@
 import React, { createContext, useState } from 'react';
 
 export const AuthContext = createContext();
-import API_BASE_URL from '../config';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -13,41 +11,18 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('Sending login request...');
-      const res = await fetch('http://192.168.101.18:8000/api/login', {
+      const res = await fetch('http://192.168.1.9:8000/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, password_confirmation: password }),
       });
-
-      const text = await res.text();
-      console.log('Raw login response:', text);
-
-      let token;
-      let data;
-      try {
-        data = JSON.parse(text);
-        token = data.token;
-      } catch (e) {
-        token = text;
-      }
-
-      if (!res.ok) {
-        // If data exists and has errors/message, use them; otherwise, use generic message
-        if (data && data.errors) {
-          throw new Error(Object.values(data.errors).join('\n'));
-        } else if (data && data.message) {
-          throw new Error(data.message);
-        } else {
-          throw new Error('Login failed');
-        }
-      }
-      if (!token) throw new Error('No token returned from API');
-
-      setUser(null);
-      setToken(token);
-      await AsyncStorage.setItem('token', token);
-      console.log('Token used for fetch:', token);
-      return token;
+      const data = await res.text();
+      if (!res.ok) throw new Error(
+        data.errors ? Object.values(data.errors).join('\n') : (data.message || 'Login failed')
+      );
+      setUser(null); // No user returned, just token
+      setToken(data || null);
+      return data;
     } catch (err) {
       console.log('Login error:', err);
       throw err;
@@ -55,42 +30,26 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register with Laravel API
-  const register = async (email, password, passwordConfirmation) => {
+  const register = async (name, email, password, passwordConfirmation) => {
     try {
       console.log('Sending register request...');
-      const res = await fetch('http://192.168.101.18:8000/api/register', {
+      const res = await fetch('http://192.168.1.9:8000/api/register', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Accept' : 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email,
           password,
           password_confirmation: passwordConfirmation,
         }),
-
-             
       });
       console.log('Register response status:', res.status);
-
-       console.log("Sending this data to backend:", {
-                // name,
-                email,
-                password,
-                password_confirmation: passwordConfirmation
-              });
-              
-      const data = await res.json();
-
+      const data = await res.text();
       console.log('Register response data:', data);
       if (!res.ok) throw new Error(
         data.errors ? Object.values(data.errors).join('\n') : 'Registration failed'
       );
-
       setUser(null);
       setToken(data || null);
-      await AsyncStorage.setItem('token',  data.token);
       return data;
     } catch (err) {
       console.log('Register error:', err);

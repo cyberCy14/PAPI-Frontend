@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import {
   SafeAreaView,
   View,
@@ -22,14 +22,25 @@ export default function RegisterScreen({ navigation }) {
   const { user, updateUser, loading } = useContext(UserContext);
 
   const [form, setForm] = useState({
-    name: user.name || '',
-    place: user.place || '',
-    dob: user.dob || null,
-    gender: user.gender || '',
+    name: '',
+    place: '',
+    dob: null,
+    gender: '',
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
-  const [profileImage, setProfileImage] = useState(user.image || null); // Save selected image
+  const [profileImage, setProfileImage] = useState(null); // Save selected image
+
+  // Update form when user data changes (for when user navigates back from profile)
+  useEffect(() => {
+    setForm({
+      name: user.name || '',
+      place: user.place || '',
+      dob: user.dob || null,
+      gender: user.gender || '',
+    });
+    setProfileImage(user.image || null);
+  }, [user.name, user.place, user.dob, user.gender, user.image]);
 
   // Function to launch image picker
   const pickImage = async () => {
@@ -93,7 +104,7 @@ export default function RegisterScreen({ navigation }) {
     if (!img) return null;
     if (img.uri) return { uri: img.uri };
     if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `http://192.168.1.10:8000/storage/${img}` };
+      return { uri: `http://192.168.1.9:8000/storage/${img}` };
     }
     return null;
   };

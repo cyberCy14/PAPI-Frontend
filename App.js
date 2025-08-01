@@ -4,13 +4,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
+import { Provider as PaperProvider } from 'react-native-paper';
 import { useFonts } from 'expo-font';
 
 // Contexts
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { UserProvider, UserContext } from './context/UserContext';
-import { RecentActivityProvider, RecentActivityContext } from './context/RecentActivityContext';
+
 
 // Screens
 import SplashScreen from './screens/SplashScreen';
@@ -24,8 +25,11 @@ import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
 import LoyaltyPointsScreen from './screens/LoyaltyPointsScreen';
+import RewardsScreen from './screens/RewardsScreen';
 import CompanyTransactScreen from './screens/CompanyTransactScreen';
 import InsightsScreen from './screens/InsightsScreen';
+import TransactionHistoryScreen from './screens/TransactionHistoryScreen';
+import AddTransactionScreen from './screens/AddTransactionScreen';
 //import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
 
 const Stack = createNativeStackNavigator();
@@ -95,10 +99,11 @@ export default function App() {
   }
 
   return (
+    <PaperProvider>
     <AuthProvider>
       <ExpenseProvider>
         <UserProvider>
-          <RecentActivityProvider>
+         
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
               <Stack.Screen name="Splash" component={SplashScreen} />
@@ -106,19 +111,22 @@ export default function App() {
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
+              <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
               <Stack.Screen name="AppTabs" component={AppTabs} />
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
               <Stack.Screen name="InsightsScreen" component={InsightsScreen} />
               <Stack.Screen name="LoyaltyPoints" component={LoyaltyPointsScreen} options={{ headerShown: false }} />
+              <Stack.Screen name="Rewards" component={RewardsScreen} options={{ headerShown: false }} />
               <Stack.Screen name="CompanyTransact" component={CompanyTransactScreen} options={{ headerShown: false }} />
               <Stack.Screen name="LoyaltyScreen" component={LoyaltyScreen} />
            
             </Stack.Navigator>
           </NavigationContainer>
-          </RecentActivityProvider>
+         
         </UserProvider>
       </ExpenseProvider>
     </AuthProvider>
+    </PaperProvider>
   );
 }

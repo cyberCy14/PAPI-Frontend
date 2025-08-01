@@ -1,5 +1,5 @@
 // screens/ProfileScreen.js
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -15,19 +15,32 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Picker } from '@react-native-picker/picker';
 import { UserContext } from '../context/UserContext';
+import { AuthContext } from '../context/AuthContext';
 import { Ionicons, Feather } from '@expo/vector-icons';
 
 export default function ProfileScreen({ navigation }) {
   const { user, updateUser } = useContext(UserContext);
+  const { logout } = useContext(AuthContext);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({
-    name: user.name || '',
-    place: user.place || '',
-    dob: user.dob || '',
-    gender: user.gender || '',
-    image: user.image || null,
+    name: '',
+    place: '',
+    dob: '',
+    gender: '',
+    image: null,
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
+
+  // Update form when user data changes
+  useEffect(() => {
+    setForm({
+      name: user.name || '',
+      place: user.place || '',
+      dob: user.dob || '',
+      gender: user.gender || '',
+      image: user.image || null,
+    });
+  }, [user.name, user.place, user.dob, user.gender, user.image]);
 
   const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -55,6 +68,31 @@ export default function ProfileScreen({ navigation }) {
       Alert.alert('Profile Saved', 'Your information has been updated.');
     }
     setIsEditing(prev => !prev);
+  };
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => {
+            logout();
+            // Navigate to login screen
+            navigation.reset({
+              index: 0,
+              routes: [{ name: 'Login' }],
+            });
+          },
+        },
+      ]
+    );
   };
 
   const pickImage = async () => {
@@ -226,6 +264,14 @@ export default function ProfileScreen({ navigation }) {
             )}
           </View>
         </View>
+
+        {/* Logout Button */}
+        <View style={styles.logoutContainer}>
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#fff" />
+            <Text style={styles.logoutText}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
@@ -285,4 +331,24 @@ const styles = StyleSheet.create({
   inputText: { fontSize: 15, color: '#333' },
   datePicker: { width: '100%' },
   picker: { width: '100%' },
+  
+  logoutContainer: {
+    marginTop: 30,
+    marginBottom: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#ff4757',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    borderRadius: 8,
+    elevation: 2,
+  },
+  logoutText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginLeft: 8,
+  },
 });
