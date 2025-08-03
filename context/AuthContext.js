@@ -1,5 +1,6 @@
 // context/AuthContext.js
 import React, { createContext, useState } from 'react';
+import API_BASE_URL from '../config'; // adjust path as needed
 
 export const AuthContext = createContext();
 
@@ -11,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       console.log('Sending login request...');
-      const res = await fetch('http://192.168.1.9:8000/api/login', {
+      const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, password_confirmation: password }),
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, passwordConfirmation) => {
     try {
       console.log('Sending register request...');
-      const res = await fetch('http://192.168.1.9:8000/api/register', {
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
