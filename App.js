@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
 import { Text, View } from 'react-native';
 import { Provider as PaperProvider } from 'react-native-paper';
 import { useFonts } from 'expo-font';
@@ -11,6 +10,7 @@ import { useFonts } from 'expo-font';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import { ExpenseProvider } from './context/ExpenseContext';
 import { UserProvider, UserContext } from './context/UserContext';
+import { LoyaltyProvider } from './context/LoyaltyContext';
 
 
 // Screens
@@ -20,7 +20,6 @@ import LoginScreen from './screens/LoginScreen';
 import SignupScreen from './screens/SignupScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
-// import HistoryScreen from './screens/HistoryScreen'; // Removed
 import BudgetScreen from './screens/BudgetScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import LoyaltyScreen from './screens/LoyaltyScreen';
@@ -30,32 +29,25 @@ import CompanyTransactScreen from './screens/CompanyTransactScreen';
 import InsightsScreen from './screens/InsightsScreen';
 import TransactionHistoryScreen from './screens/TransactionHistoryScreen';
 import AddTransactionScreen from './screens/AddTransactionScreen';
-//import CustomerLoyaltyActivityScreen from './screens/CustomerLoyaltyActivityScreen';
+import ScanScreen from './screens/ScanScreen';
+import CustomTabBar from './navigation/CustomTabBar';
+import PersonalInfoScreen from './screens/PersonalInfoScreen';
+import AboutScreen from './screens/AboutScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
+
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Bottom tab navigator (History removed)
-function AppTabs() {
+function MainTabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: '#000',
-        tabBarInactiveTintColor: '#888',
-        tabBarIcon: ({ color, size }) => {
-          const icons = {
-            Home: 'home-outline',
-            Report: 'wallet-outline',
-            Loyalty: 'trophy-outline',
-            Profile: 'person-outline',
-          };
-          return <Ionicons name={icons[route.name]} size={size} color={color} />;
-        },
-      })}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Report" component={BudgetScreen} />
+      <Tab.Screen name="Scan" component={ScanScreen} />
       <Tab.Screen name="Loyalty" component={LoyaltyScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -65,26 +57,50 @@ function AppTabs() {
 // Redirection logic screen
 function RootRedirect() {
   const navigation = useNavigation();
-  const { user } = useContext(AuthContext);
+  const { token } = useContext(AuthContext);
   const { profileExists, loading } = useContext(UserContext);
 
   useEffect(() => {
     if (loading) return;
 
-    if (!user) {
+    if (!token) {
       navigation.replace('Login');
     } else if (!profileExists) {
       navigation.replace('Register');
     } else {
       navigation.replace('AppTabs');
     }
-  }, [user, profileExists, loading]);
+  }, [token, profileExists, loading]);
 
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
       <Text>Redirecting...</Text>
     </View>
   );
+}
+
+// Authentication wrapper component
+function AuthWrapper() {
+  const { token } = useContext(AuthContext);
+  const { profileExists, loading } = useContext(UserContext);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
+
+  if (!token) {
+    return <LoginScreen />;
+  }
+
+  if (!profileExists) {
+    return <RegisterScreen />;
+  }
+
+  return <MainTabs />;
 }
 
 // App component with all providers
@@ -103,6 +119,7 @@ export default function App() {
     <AuthProvider>
       <ExpenseProvider>
         <UserProvider>
+          <LoyaltyProvider>
          
           <NavigationContainer>
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
@@ -111,8 +128,7 @@ export default function App() {
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
-              <Stack.Screen name="HomeScreen" component={HomeScreen} options={{ headerShown: false }} />
-              <Stack.Screen name="AppTabs" component={AppTabs} />
+              <Stack.Screen name="AppTabs" component={AuthWrapper} />
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
               <Stack.Screen name="InsightsScreen" component={InsightsScreen} />
@@ -120,10 +136,14 @@ export default function App() {
               <Stack.Screen name="Rewards" component={RewardsScreen} options={{ headerShown: false }} />
               <Stack.Screen name="CompanyTransact" component={CompanyTransactScreen} options={{ headerShown: false }} />
               <Stack.Screen name="LoyaltyScreen" component={LoyaltyScreen} />
+              <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
+              <Stack.Screen name="About" component={AboutScreen} />
+              <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
            
             </Stack.Navigator>
           </NavigationContainer>
          
+          </LoyaltyProvider>
         </UserProvider>
       </ExpenseProvider>
     </AuthProvider>

@@ -23,6 +23,8 @@ export default function RegisterScreen({ navigation }) {
 
   const [form, setForm] = useState({
     name: '',
+    phone: '',
+    address: '',
     place: '',
     dob: null,
     gender: '',
@@ -35,12 +37,14 @@ export default function RegisterScreen({ navigation }) {
   useEffect(() => {
     setForm({
       name: user.name || '',
+      phone: user.phone || '',
+      address: user.address || '',
       place: user.place || '',
       dob: user.dob || null,
       gender: user.gender || '',
     });
     setProfileImage(user.image || null);
-  }, [user.name, user.place, user.dob, user.gender, user.image]);
+  }, [user.name, user.phone, user.address, user.place, user.dob, user.gender, user.image]);
 
   // Function to launch image picker
   const pickImage = async () => {
@@ -114,8 +118,8 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleRegister = async () => {
-    const { name, place, dob, gender } = form;
-    if (!name.trim() || !place.trim() || !dob || !gender) {
+    const { name, phone, address, place, dob, gender } = form;
+    if (!name.trim() || !phone.trim() || !address.trim() || !place.trim() || !dob || !gender) {
       return alert('Please fill in all fields.');
     }
 
@@ -199,6 +203,33 @@ export default function RegisterScreen({ navigation }) {
                 placeholderTextColor="#999"
                 value={form.name}
                 onChangeText={(text) => handleChange('name', text)}
+              />
+            </View>
+
+            {/* Phone Number Input */}
+            <View style={styles.inputWrapper}>
+              <Ionicons name="call-outline" size={24} color="#555" style={styles.icon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Phone Number"
+                placeholderTextColor="#999"
+                value={form.phone}
+                onChangeText={(text) => handleChange('phone', text)}
+                keyboardType="phone-pad"
+              />
+            </View>
+
+            {/* Address Input */}
+            <View style={styles.inputWrapper}>
+              <Ionicons name="home-outline" size={24} color="#555" style={styles.icon} />
+              <TextInput
+                style={styles.textInput}
+                placeholder="Address"
+                placeholderTextColor="#999"
+                value={form.address}
+                onChangeText={(text) => handleChange('address', text)}
+                multiline
+                numberOfLines={2}
               />
             </View>
 

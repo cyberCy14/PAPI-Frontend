@@ -1,13 +1,26 @@
-import { createContext, useState } from 'react';
+import { createContext, useState, useContext, useEffect } from 'react';
+import { AuthContext } from './AuthContext';
 
 export const ExpenseContext = createContext();
 
 export const ExpenseProvider = ({ children }) => {
   const [expenses, setExpenses] = useState([]);
+  const { token } = useContext(AuthContext);
 
   const addExpense = (expense) => {
     setExpenses((prev) => [...prev, expense]);
   };
+
+  const clearExpenses = () => {
+    setExpenses([]);
+  };
+
+  // Clear expenses when token is null (logout)
+  useEffect(() => {
+    if (!token) {
+      clearExpenses();
+    }
+  }, [token]);
 
   // ✅ Step 1: Function to calculate totals per budget category
   const getBudgetTotals = () => {
@@ -37,7 +50,7 @@ export const ExpenseProvider = ({ children }) => {
   };
 
   return (
-    <ExpenseContext.Provider value={{ expenses, addExpense, getBudgetTotals }}>
+    <ExpenseContext.Provider value={{ expenses, addExpense, getBudgetTotals, clearExpenses }}>
       {children}
     </ExpenseContext.Provider>
   );

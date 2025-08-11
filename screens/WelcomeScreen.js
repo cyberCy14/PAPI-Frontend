@@ -19,7 +19,7 @@ export default function WelcomeScreen() {
         resizeMode="contain"
       />
       <Text style={styles.title}>Welcome to</Text>
-      <Text style={styles.brand}>Papi</Text>
+      <Text style={styles.brand}>PAPI</Text>
       <Text style={styles.subtitle}>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
         incididunt ut labore et dolore magna aliqua.

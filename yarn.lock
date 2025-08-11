@@ -3951,6 +3951,13 @@ expo-av@~15.1.6:
   resolved "https://registry.npmjs.org/expo-av/-/expo-av-15.1.6.tgz"
   integrity sha512-5ZbeXdCmdckZHwtEV+8tRZqLlUWR96gkkUIxpyZAEvK0L+aI/BnyhDCpjnSKWwZo4ZA6lx8/su9kyFNV/mQ/sQ==
 
+expo-camera@^16.1.11:
+  version "16.1.11"
+  resolved "https://registry.npmjs.org/expo-camera/-/expo-camera-16.1.11.tgz"
+  integrity sha512-etA5ZKoC6nPBnWWqiTmlX//zoFZ6cWQCCIdmpUHTGHAKd4qZNCkhPvBWbi8o32pDe57lix1V4+TPFgEcvPwsaA==
+  dependencies:
+    invariant "^2.2.4"
+
 expo-constants@*, expo-constants@~17.1.7:
   version "17.1.7"
   resolved "https://registry.npmjs.org/expo-constants/-/expo-constants-17.1.7.tgz"
@@ -6156,7 +6163,7 @@ react-native-vector-icons@^10.3.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native-worklets@>=0.3.0:
+react-native-worklets@^0.4.1, react-native-worklets@>=0.3.0:
   version "0.4.1"
   resolved "https://registry.npmjs.org/react-native-worklets/-/react-native-worklets-0.4.1.tgz"
   integrity sha512-QXAMZ8jz0sLEoNrc3ej050z6Sd+UJ/Gef4SACeMuoLRinwHIy4uel7XtMPJZMqKhFerkwXZ7Ips5vIjnNyPDBA==

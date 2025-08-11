@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { AuthContext } from './AuthContext';
+import { API_ENDPOINTS, STORAGE_PATHS } from '../config';
 
 export const UserContext = createContext();
 
@@ -7,6 +8,7 @@ export const UserProvider = ({ children }) => {
   const { token } = useContext(AuthContext);
   const [user, setUser] = useState({
     name: '',
+    email: '',
     phone: '',
     address: '',
     place: '',
@@ -22,7 +24,7 @@ export const UserProvider = ({ children }) => {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch('http://192.168.1.9:8000/api/user/profile', {
+      const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
@@ -33,6 +35,8 @@ export const UserProvider = ({ children }) => {
       setUser(data.user);
       const complete =
         data.user.name?.trim() &&
+        data.user.phone?.trim() &&
+        data.user.address?.trim() &&
         data.user.place?.trim() &&
         data.user.dob &&
         data.user.gender?.trim();
@@ -50,6 +54,7 @@ export const UserProvider = ({ children }) => {
       // Reset user data when token is null (logout)
       setUser({
         name: '',
+        email: '',
         phone: '',
         address: '',
         place: '',
@@ -68,6 +73,9 @@ export const UserProvider = ({ children }) => {
     console.log('updateUser called with:', updates);
     const formData = new FormData();
     formData.append('name', updates.name?.trim() || '');
+    formData.append('email', updates.email?.trim() || '');
+    formData.append('phone', updates.phone?.trim() || '');
+    formData.append('address', updates.address?.trim() || '');
     formData.append('place', updates.place?.trim() || '');
     // Format dob as YYYY-MM-DD if it's a Date object
     let dob = updates.dob;
@@ -88,7 +96,7 @@ export const UserProvider = ({ children }) => {
     }
 
     console.log('Sending request to backend...');
-    const res = await fetch('http://192.168.1.9:8000/api/user/profile', {
+    const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -108,6 +116,8 @@ export const UserProvider = ({ children }) => {
     setUser(data.user);
     const complete =
       data.user.name?.trim() &&
+      data.user.phone?.trim() &&
+      data.user.address?.trim() &&
       data.user.place?.trim() &&
       data.user.dob &&
       data.user.gender?.trim();

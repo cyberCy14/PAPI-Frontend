@@ -1,17 +1,18 @@
 // context/AuthContext.js
 import React, { createContext, useState } from 'react';
+import { API_ENDPOINTS } from '../config';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setToken] = useState(null); // e test sa nako 
 
   // Login with Laravel API
   const login = async (email, password) => {
     try {
       console.log('Sending login request...');
-      const res = await fetch('http://192.168.1.9:8000/api/login', {
+      const res = await fetch(API_ENDPOINTS.LOGIN, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password, password_confirmation: password }),
@@ -33,7 +34,7 @@ export const AuthProvider = ({ children }) => {
   const register = async (name, email, password, passwordConfirmation) => {
     try {
       console.log('Sending register request...');
-      const res = await fetch('http://192.168.1.9:8000/api/register', {
+      const res = await fetch(API_ENDPOINTS.REGISTER, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -57,9 +58,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
+  const logout = async () => {
+    try {
+      if (token) {
+        await fetch(API_ENDPOINTS.LOGOUT, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+          },
+        });
+      }
+    } catch (err) {
+      console.log('Logout error (ignored):', err);
+    } finally {
+      setUser(null);
+      setToken(null);
+    }
   };
 
   return (

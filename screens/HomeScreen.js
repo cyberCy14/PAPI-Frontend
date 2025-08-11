@@ -56,6 +56,11 @@ export default function HomeScreen({ route }) {
   const { user } = useContext(UserContext);
   const userName = user?.name?.trim() || route.params?.name?.trim() || 'guest';
 
+  // Don't render if no user - AuthWrapper will handle navigation
+  if (!user || !user.name) {
+    return null;
+  }
+
 /* ─────────────── state ─────────────── */
   const [messages, setMessages] = useState([]);
   const [attachments, setAttachments] = useState([]);
@@ -848,6 +853,7 @@ return (
     <KeyboardAvoidingView
       style={styles.flex}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 80 : 60}
     >
       {/* Sidebar */}
       {renderSidebar()}

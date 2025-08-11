@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState, useRef, useFocusEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, FlatList, ActivityIndicator } from 'react-native';
+import React, { useContext, useEffect, useState, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, ImageBackground, FlatList, ActivityIndicator, Alert } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { UserContext } from '../context/UserContext';
-
-
-import API_BASE_URL  from '../config';
+import { LoyaltyContext } from '../context/LoyaltyContext';
 
 const LOYALTY_BG = require('../assets/Rectangle 73.png');
 const LOYALTY_BJ = require('../assets/Rectangle 77.png');
@@ -51,44 +50,30 @@ const REWARDS_CARDS = [
 
 export default function LoyaltyScreen({ navigation }) {
   const { user } = useContext(UserContext);
-  const [points, setPoints] = useState(null);
-  const [nextReward, setNextReward] = useState(null);
-  const [activity, setActivity] = useState([]);
-  const [inviteCode, setInviteCode] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [rewards, setRewards] = useState([]);
+  const { loyaltyData, transactions, rewards, loading, refreshLoyaltyData, debouncedRefresh } = useContext(LoyaltyContext);
+  const [inviteCode, setInviteCode] = useState('PAPI1234'); // Default invite code
   const inviteSliderRef = useRef(null);
   const rewardsSliderRef = useRef(null);
   const [inviteIndex, setInviteIndex] = useState(0);
   const [rewardsIndex, setRewardsIndex] = useState(0);
-  // const { activity, loading:activityLoading, refreshActivity, updateActivity} = useContext(RecentActivityContext);
-  
+  const [error, setError] = useState(null);
+  const lastRefreshTimeRef = useRef(0);
 
+  // Don't render if no user - AuthWrapper will handle navigation
+  if (!user || !user.name) {
+    return null;
+  }
 
-  // Fetch loyalty data from API
-  useEffect(() => {
-    async function fetchLoyalty() {
-      setLoading(true);
-      try {
-        // TODO: Replace with your real API endpoints
-        // Example: const res = await axios.get('/api/loyalty/balance');
-        setPoints(1440); // mock
-        setNextReward(560); // mock
-        setInviteCode('PAPI1234'); // mock
-        setActivity([
-          { id: '1', type: 'earn', points: 50, desc: 'Purchased coffee at Starbucks' },
-          { id: '2', type: 'earn', points: 25, desc: 'Bought lunch at McDonald\'s' },
-          { id: '3', type: 'redeem', points: 100, desc: 'Redeemed for free dessert' },
-          { id: '4', type: 'earn', points: 75, desc: 'Shopping at Target' },
-          { id: '5', type: 'earn', points: 30, desc: 'Gas station purchase' },
-        ]);
-      } catch (e) {
-        // handle error
-      }
-      setLoading(false);
-    }
-    fetchLoyalty();
-  }, []);
+  // Refresh data when screen comes into focus (with cooldown)
+  useFocusEffect(
+    useCallback(() => {
+      // Disable auto-refresh to prevent infinite loops
+      // Only refresh manually through the refresh button
+      return () => {
+        // Cleanup if needed
+      };
+    }, [])
+  );
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -114,23 +99,41 @@ export default function LoyaltyScreen({ navigation }) {
 
   const username = user?.name || 'User';
 
+  // Handle refresh with error handling
+  const handleRefresh = async () => {
+    try {
+      setError(null);
+      lastRefreshTimeRef.current = Date.now();
+      await refreshLoyaltyData();
+    } catch (err) {
+      setError('Failed to refresh loyalty data');
+      Alert.alert('Error', 'Failed to refresh loyalty data. Please try again.');
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Loyalty</Text>
+        <TouchableOpacity onPress={handleRefresh} style={styles.refreshButton}>
+          <Ionicons name="refresh" size={24} color="#061437" />
+        </TouchableOpacity>
       </View>
+      
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Error Message */}
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity onPress={handleRefresh} style={styles.retryButton}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {/* Loyalty Balance Card */}
         <ImageBackground source={LOYALTY_BG} style={styles.balanceCard} imageStyle={styles.balanceCardBg}>
-          {/* Removed Coin Button */}
-          {/* <TouchableOpacity 
-            style={styles.coinButton}
-            onPress={() => navigation.navigate('Rewards')}
-          >
-            <MaterialCommunityIcons name="currency-usd" size={24} color="#FFD700" />
-          </TouchableOpacity> */}
-          
           <Text style={styles.balanceLabelAbove}>Loyalty Balance</Text>
           <View style={styles.balanceRow}>
             <View style={styles.trophyWrap}>
@@ -139,9 +142,9 @@ export default function LoyaltyScreen({ navigation }) {
             <View style={styles.pointsWrap}>
               <TouchableOpacity onPress={() => navigation.navigate('LoyaltyPoints')}>
                 <Text style={styles.balancePoints} numberOfLines={1} adjustsFontSizeToFit>
-                  {points !== null ? (
+                  {!loading ? (
                     <>
-                      {points} <Text style={styles.ptsLabel}>pts</Text>
+                      {loyaltyData?.points || 0} <Text style={styles.ptsLabel}>pts</Text>
                     </>
                   ) : (
                     <ActivityIndicator color="#fff" />
@@ -149,7 +152,7 @@ export default function LoyaltyScreen({ navigation }) {
                 </Text>
               </TouchableOpacity>
               <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>
-                {nextReward !== null ? `${nextReward} points till your next reward` : ''}
+                {loyaltyData?.next_reward > 0 ? `${loyaltyData.next_reward} points till your next reward` : ''}
               </Text>
             </View>
           </View>
@@ -158,25 +161,27 @@ export default function LoyaltyScreen({ navigation }) {
           <Text style={styles.balanceUserAligned}>{username}</Text>
         </ImageBackground>
 
-
         {/* Rewards Slider */}
         <FlatList
-          data={rewards}
-          keyExtractor={item => item.id}
+          data={rewards || []}
+          keyExtractor={item => item.id?.toString() || Math.random().toString()}
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.rewardsSlider}
           renderItem={({ item }) => (
             <View style={styles.rewardCard}>
               <View style={styles.rewardIconWrap}>
-                <MaterialCommunityIcons name={item.icon} size={32} color="#FFD700" />
+                <MaterialCommunityIcons 
+                  name={item.type === 'discount' ? 'percent' : 'gift'} 
+                  size={32} 
+                  color="#FFD700" 
+                />
               </View>
-              <Text style={styles.rewardCardName}>{item.name}</Text>
-              <Text style={styles.rewardCardPoints}>{item.points} pts</Text>
+              <Text style={styles.rewardCardName}>{item.name || 'Reward'}</Text>
+              <Text style={styles.rewardCardPoints}>{item.points_required || 0} pts</Text>
             </View>
           )}
         />
-
 
         {/* Referral/Invite Section */}
         <FlatList
@@ -196,7 +201,6 @@ export default function LoyaltyScreen({ navigation }) {
               <View style={styles.inviteContent}>
                 <Text style={styles.inviteTitle}>{item.title}</Text>
                 <Text style={styles.inviteDesc}>{item.desc}</Text>
-                
               </View>
               <TouchableOpacity style={styles.inviteBtn}>
                   <Text style={styles.inviteBtnText}>{item.btn}</Text>
@@ -256,17 +260,16 @@ export default function LoyaltyScreen({ navigation }) {
           )}
         />
 
-
         {/* Recent Activity */}
         <Text style={styles.activityTitle}>Recent Activity</Text>
 
         <View style={{ marginTop: 8 }}>
         {loading ? (
           <ActivityIndicator size="small" color="#000" />
-        ) : !activity || activity.length === 0 ? (
+        ) : !transactions || transactions.length === 0 ? (
           <Text style={{ textAlign: 'center', color: '#888' }}>No recent activity.</Text>
         ) : (
-          activity.map(item => (
+          transactions.map(item => (
             <View
               key={item.id}
               style={[
@@ -285,7 +288,7 @@ export default function LoyaltyScreen({ navigation }) {
                     ? `You earned ${item.points} points`
                     : `You redeemed ${item.points} points`}
                 </Text>
-                <Text style={styles.activityDesc}>{item.desc}</Text>
+                <Text style={styles.activityDesc}>{item.notes || item.source || 'Loyalty transaction'}</Text>
               </View>
               <View style={styles.activityRight}>
                 <View
@@ -314,6 +317,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: 45,
     paddingBottom: 20,
     paddingHorizontal: 16,
@@ -326,6 +330,9 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'center',
     fontFamily: 'Sansation-Bold',
+  },
+  refreshButton: {
+    marginLeft: 10,
   },
   scrollContent: { padding: 16, paddingBottom: 40 },
   balanceCard: {
@@ -392,6 +399,11 @@ const styles = StyleSheet.create({
     marginBottom: 0,
     marginTop: 10,
     flexShrink: 1,
+  },
+  ptsLabel: {
+    color: '#FFD700',
+    fontSize: 24,
+    fontFamily: 'Sansation-Regular',
   },
   balanceSub: {
     color: '#fff',
@@ -624,5 +636,30 @@ const styles = StyleSheet.create({
   rewardsIcon: {
     fontSize: 24,
     marginRight: 8,
+  },
+  errorContainer: {
+    backgroundColor: '#FFE5E5',
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 15,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#FF3B30',
+    fontSize: 14,
+    fontFamily: 'Sansation-Regular',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  retryButton: {
+    backgroundColor: '#061437',
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontFamily: 'Sansation-Bold',
+    fontSize: 15,
   },
 });

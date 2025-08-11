@@ -1,354 +1,258 @@
-// screens/ProfileScreen.js
-import React, { useContext, useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  Image,
-  SafeAreaView,
-  TouchableOpacity,
-  Alert,
-  Platform,
+import React, { useEffect, useState, useContext } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  Image, 
+  TouchableOpacity, 
+  ScrollView 
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
+import { useNavigation } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/Feather';
+import { Ionicons } from '@expo/vector-icons';
 import { UserContext } from '../context/UserContext';
 import { AuthContext } from '../context/AuthContext';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { STORAGE_PATHS } from '../config';
 
-export default function ProfileScreen({ navigation }) {
-  const { user, updateUser } = useContext(UserContext);
+export default function ProfileScreen() {
+  const navigation = useNavigation();
+  const { user } = useContext(UserContext);
   const { logout } = useContext(AuthContext);
-  const [isEditing, setIsEditing] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    place: '',
-    dob: '',
-    gender: '',
-    image: null,
-  });
-  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [profile, setProfile] = useState({});
 
-  // Update form when user data changes
   useEffect(() => {
-    setForm({
-      name: user.name || '',
-      place: user.place || '',
-      dob: user.dob || '',
-      gender: user.gender || '',
-      image: user.image || null,
-    });
-  }, [user.name, user.place, user.dob, user.gender, user.image]);
-
-  const handleChange = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
-
-  const toggleEdit = () => {
-    if (isEditing) {
-      // Ensure dob is a Date object
-      let dobValue = form.dob;
-      if (!(dobValue instanceof Date) && typeof dobValue === 'string') {
-        dobValue = new Date(dobValue);
-      }
-      // Ensure image is in correct format for FormData
-      let imageValue = null;
-      if (form.image && form.image.uri) {
-        imageValue = {
-          uri: form.image.uri,
-          name: form.image.name || 'profile.jpg',
-          type: form.image.type || 'image/jpeg',
-        };
-      }
-      updateUser({
-        ...form,
-        dob: dobValue,
-        image: imageValue,
+    // Update profile state when user context changes
+    if (user && user.name) {
+      setProfile({
+        fullName: user.name,
+        email: user.email || '',
+        photo: user.image || null
       });
-      Alert.alert('Profile Saved', 'Your information has been updated.');
+    } else {
+      // Clear profile when no user or no name
+      setProfile({
+        fullName: '',
+        email: '',
+        photo: null
+      });
     }
-    setIsEditing(prev => !prev);
-  };
+  }, [user]);
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: () => {
-            logout();
-            // Navigate to login screen
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Login' }],
-            });
-          },
-        },
-      ]
-    );
-  };
+  // Don't render if no user - AuthWrapper will handle navigation
+  if (!user || !user.name) {
+    return null;
+  }
 
-  const pickImage = async () => {
-    if (!isEditing) return;
-    console.log('ProfileScreen: Image picker triggered');
-    const { granted } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    console.log('ProfileScreen: Permission result:', granted);
-    if (!granted) return Alert.alert('Permission needed', 'Allow access to your photos.');
-    
+  const handleLogout = async () => {
     try {
-      console.log('ProfileScreen: Launching image picker...');
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use old API
-        allowsEditing: true,
-        quality: 1,
-      });
-      console.log('ProfileScreen: Image picker result:', result);
-      console.log('ProfileScreen: Result canceled:', result.canceled);
-      console.log('ProfileScreen: Result URI:', result.uri);
-      console.log('ProfileScreen: Result assets:', result.assets);
-      
-      // Handle both old API (result.uri) and new API (result.assets)
-      let selectedImage = null;
-      if (!result.canceled) {
-        if (result.uri) {
-          // Old API format
-          selectedImage = {
-            uri: result.uri,
-            name: 'profile.jpg',
-            type: 'image/jpeg',
-          };
-          console.log('ProfileScreen: Selected image URI (old API):', result.uri);
-        } else if (result.assets && result.assets.length > 0) {
-          // New API format
-          const asset = result.assets[0];
-          selectedImage = {
-            uri: asset.uri,
-            name: asset.fileName || 'profile.jpg',
-            type: asset.mimeType || 'image/jpeg',
-          };
-          console.log('ProfileScreen: Selected image asset (new API):', asset);
-        }
-      }
-
-      if (selectedImage) {
-        handleChange('image', selectedImage);
-        console.log('ProfileScreen: Profile image set successfully');
-      } else {
-        console.log('ProfileScreen: No image selected or picker was canceled');
-      }
+      await logout();
+      // Navigation will be handled by the auth context automatically
     } catch (error) {
-      console.log('ProfileScreen: Image picker error:', error);
+      console.log('Logout error:', error);
     }
   };
 
-  const onDateChange = (event, selectedDate) => {
-    setShowDatePicker(false);
-    if (selectedDate) handleChange('dob', selectedDate.toISOString());
-  };
-
-  const formatDate = (iso) =>
-    iso
-      ? new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
-      : '';
-
-  // Helper to resolve image source
+  // Helper to resolve image source for backend images
   const getImageSource = (img) => {
     if (!img) return null;
     if (img.uri) return { uri: img.uri };
     if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `http://192.168.1.10:8000/storage/${img}` };
+      return { uri: `${STORAGE_PATHS.PROFILE_IMAGES}${img.replace('profile_images/', '')}` };
     }
     return null;
   };
 
+  const RowItem = ({ icon, label, value, onPress }) => (
+    <TouchableOpacity onPress={onPress} style={styles.rowItem}>
+      <View style={styles.rowLeft}>
+        <Icon name={icon} size={20} color="#000" />
+        <Text style={styles.rowText}>{label}</Text>
+      </View>
+      <View style={styles.rowRight}>
+        {value ? <Text style={styles.rowValue}>{value}</Text> : null}
+        <Icon name="chevron-right" size={20} color="#000" />
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+    <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Icon name="arrow-left" size={24} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Profile</Text>
-        <TouchableOpacity onPress={toggleEdit}>
-          <Feather name={isEditing ? 'check' : 'edit'} size={20} color="#000" />
-        </TouchableOpacity>
+        <Text style={styles.headerText}>My Profile</Text>
       </View>
 
-      {/* Avatar */}
-      <View style={styles.profile}>
-        <TouchableOpacity onPress={pickImage} activeOpacity={isEditing ? 0.6 : 1}>
-          {form.image || user.image ? (
-            <Image source={getImageSource(form.image || user.image)} style={styles.avatar} />
-          ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder]}>  
-              <Ionicons name="person" size={60} color="#aaa" />
-            </View>
-          )}
-          {isEditing && <Text style={styles.changePhoto}>Change Photo</Text>}
-        </TouchableOpacity>
+      <Image 
+        source={profile.photo ? getImageSource(profile.photo) : require('../assets/avatar.png')} 
+        style={styles.avatar} 
+      />
+      <Text style={styles.name}>{profile.fullName}</Text>
+      <Text style={styles.email}>{profile.email}</Text>
+
+      {/* General Section */}
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>General</Text>
+        <View style={styles.sectionLine} />
       </View>
 
-      {/* Form Fields */}
-      <View style={styles.infoContainer}>
-        {/* Full Name */}
-        <View style={styles.fieldWrapper}>
-          <Text style={styles.label}>Full Name</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.readOnly]}
-            value={form.name}
-            onChangeText={text => handleChange('name', text)}
-            editable={isEditing}
-            placeholder={isEditing ? 'Enter full name' : ''}
-          />
-        </View>
+      <RowItem 
+        icon="user" 
+        label="Personal Info" 
+        onPress={() => navigation.navigate('PersonalInfo')} 
+      />
+      <RowItem icon="shield" label="Security" onPress={() => {}} />
+      <RowItem icon="globe" label="Language" value="English (US)" onPress={() => {}} />
 
-        {/* Place of Birth */}
-        <View style={styles.fieldWrapper}>
-          <Text style={styles.label}>Place of Birth</Text>
-          <TextInput
-            style={[styles.input, !isEditing && styles.readOnly]}
-            value={form.place}
-            onChangeText={text => handleChange('place', text)}
-            editable={isEditing}
-            placeholder={isEditing ? 'Enter place of birth' : ''}
-          />
-        </View>
-
-        {/* Date of Birth */}
-        <View style={styles.fieldWrapper}>
-          <Text style={styles.label}>Date of Birth</Text>
-          <TouchableOpacity
-            style={[styles.input, !isEditing && styles.readOnly]}
-            onPress={() => isEditing && setShowDatePicker(true)}
-            activeOpacity={isEditing ? 0.6 : 1}
-          >
-            <Text style={styles.inputText}>
-              {formatDate(form.dob) || (isEditing ? 'Select date' : '')}
-            </Text>
-          </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={form.dob ? new Date(form.dob) : new Date()}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
-              style={styles.datePicker}
-            />
-          )}
-        </View>
-
-        {/* Gender */}
-        <View style={styles.fieldWrapper}>
-          <Text style={styles.label}>Gender</Text>
-          <View style={[styles.input, !isEditing && styles.readOnly]}>  
-            {isEditing ? (
-              <Picker
-                selectedValue={form.gender}
-                onValueChange={value => handleChange('gender', value)}
-                style={styles.picker}
-              >
-                <Picker.Item label="Select gender" value="" />
-                <Picker.Item label="Male" value="Male" />
-                <Picker.Item label="Female" value="Female" />
-                <Picker.Item label="Other" value="Other" />
-              </Picker>
-            ) : (
-              <Text style={styles.inputText}>{form.gender}</Text>
-            )}
-          </View>
-        </View>
-
-        {/* Logout Button */}
-        <View style={styles.logoutContainer}>
-          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#fff" />
-            <Text style={styles.logoutText}>Logout</Text>
-          </TouchableOpacity>
-        </View>
+      {/* About Section */}
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.sectionLine} />
       </View>
-    </SafeAreaView>
+
+      <RowItem icon="help-circle" label="Help Center" onPress={() => {}} />
+      <RowItem 
+        icon="lock" 
+        label="Privacy Policy" 
+        onPress={() => navigation.navigate('PrivacyPolicy')} 
+      />
+      <RowItem 
+        icon="info" 
+        label="About Papi" 
+        onPress={() => navigation.navigate('About')} 
+      />
+
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={20} color="#0E134F" />
+        <Text style={styles.logoutText}>Logout</Text> 
+      </TouchableOpacity>
+
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
-  header: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
+  container: {
+    padding: 20,
+    paddingBottom: 60,
+    backgroundColor: '#FAF7F7',
+  },
+
+  headerContainer: {
+    position: 'relative',
+    height: 50,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F7B801', 
-    paddingVertical: 12, 
-    paddingHorizontal: 20,
-    marginTop: 40,
-    elevation:4,
-  },
-  headerTitle: { 
-    fontSize: 18, 
-    fontWeight: 'bold' 
-  },
-
-  profile: { 
-    alignItems: 'center', 
-    marginVertical: 20 
-  },
-  avatar: { 
-    width: 140, 
-    height: 140, 
-    borderRadius: 70, 
-    marginBottom: 6 },
-    avatarPlaceholder: { 
-    backgroundColor: '#eee', 
-    justifyContent: 'center', 
-    alignItems: 'center' },
-    changePhoto: { 
-    fontSize: 12, 
-    color: '#555', 
-    textAlign: 'center' },
-
-  infoContainer: { paddingHorizontal: 20 },
-  fieldWrapper: { marginBottom: 20 },
-  bel: { color: '#555', 
-    marginBottom: 4, 
-    fontSize: 13 },
-
-  input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-  },
-
-  readOnly: { backgroundColor: '#f5f5f5' },
-  inputText: { fontSize: 15, color: '#333' },
-  datePicker: { width: '100%' },
-  picker: { width: '100%' },
-  
-  logoutContainer: {
-    marginTop: 30,
     marginBottom: 20,
+    marginTop: 20
   },
+
+  backBtn: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    paddingLeft: 10,
+  },
+
+  headerText: {
+    fontSize: 30,
+    fontFamily: 'Sansation-Bold',
+    color: '#111',
+  },
+
+  avatar: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    borderWidth: 4,
+    borderColor: '#FDC856',
+    alignSelf: 'center',
+  },
+
+  name: {
+    fontSize: 25,
+    fontFamily: 'Sansation-Bold',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+
+  email: {
+    fontSize: 16,
+    fontFamily: 'Sansation-Regular',
+    color: '#888',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 30,
+  },
+
+  sectionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 25,
+    marginBottom: 10,
+  },
+
+  sectionTitle: {
+    fontSize: 14,
+    fontFamily: 'Sansation-Regular',
+    color: '#999',
+    marginRight: 10,
+  },
+
+  sectionLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#ccc',
+    opacity: 0.6,
+  },
+
+  rowItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 15,
+  },
+
+  rowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  rowText: {
+    marginLeft: 15,
+    fontSize: 16,
+    fontFamily: 'Sansation-Regular',
+    color: '#111',
+  },
+
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  rowValue: {
+    color: '#888',
+    marginRight: 5,
+    fontSize: 14,
+  }, 
+
   logoutButton: {
-    backgroundColor: '#ff4757',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 15,
-    borderRadius: 8,
-    elevation: 2,
+    backgroundColor: '#FDC856',
+    padding: 15,
+    borderRadius: 12,
+    marginTop: 70,
   },
+
   logoutText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
+    color: '#0E134F',
+    fontFamily: 'Sansation-Bold',
+    marginLeft: 10
   },
 });
