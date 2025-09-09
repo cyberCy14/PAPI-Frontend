@@ -53,14 +53,22 @@ export default function ProfileScreen() {
   };
 
   // Helper to resolve image source for backend images
+  // const getImageSource = (img) => {
+  //   if (!img) return null;
+  //   if (img.uri) return { uri: img.uri };
+  //   if (typeof img === 'string' && img.startsWith('profile_images/')) {
+  //     return { uri: `${STORAGE_PATHS.PROFILE_IMAGES}${img.replace('profile_images/', '')}` };
+  //   }
+  //   return null;
+  // };
+
+
   const getImageSource = (img) => {
     if (!img) return null;
-    if (img.uri) return { uri: img.uri };
-    if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `${STORAGE_PATHS.PROFILE_IMAGES}${img.replace('profile_images/', '')}` };
-    }
-    return null;
-  };
+    if (img.uri) return { uri: img.uri};
+    return {uri: img};
+  }
+
 
   const RowItem = ({ icon, label, value, onPress }) => (
     <TouchableOpacity onPress={onPress} style={styles.rowItem}>
@@ -85,9 +93,10 @@ export default function ProfileScreen() {
       </View>
 
       <Image 
-        source={profile.photo ? getImageSource(profile.photo) : require('../assets/avatar.png')} 
-        style={styles.avatar} 
-      />
+          source={profile.photo ? getImageSource(profile.photo) : require('../assets/avatar.png')} 
+          style={styles.avatar} 
+        />
+
       <Text style={styles.name}>{profile.fullName}</Text>
       <Text style={styles.email}>{profile.email}</Text>
 

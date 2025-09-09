@@ -1,5 +1,7 @@
 import React, { useContext, useState, useRef } from 'react';
+import { UserContext } from '../context/UserContext';
 import { AuthContext } from '../context/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -14,12 +16,14 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function LoginScreen({ navigation }) {
-  const { login } = useContext(AuthContext);
+export default function LoginScreen() {
+  const { login, token } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
+  const { fetchUserProfile, profileExists } = useContext(UserContext);
+  const navigation = useNavigation();
 
   // Animated label state
   const [isEmailFocused, setIsEmailFocused] = useState(false);
@@ -81,15 +85,30 @@ export default function LoginScreen({ navigation }) {
       return;
     }
     setLoading(true);
+
     try {
       await login(email.trim(), password);
-      navigation.replace('AppTabs');
+      // navigation.replace('AppTabs');
+
+      const result = await fetchUserProfile();
+
+      if(result && result.complete){
+        navigation.replace('AppTabs');
+      } else{
+        navigation.replace('Register');
+      }
+
+
+
     } catch (err) {
       Alert.alert('Login Failed', err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
   };
+
+
+
 
   const handleGoogleLogin = () => {
     // TODO: wire up Google sign-in here

@@ -1,12 +1,12 @@
 // Backend configuration
-export const API_BASE_URL = 'http://192.168.1.17:8000';
+export const API_BASE_URL = 'http://192.168.1.14:8000';
 
 // API endpoints
 export const API_ENDPOINTS = {
   LOGIN: `${API_BASE_URL}/api/login`,
   REGISTER: `${API_BASE_URL}/api/register`,
   LOGOUT: `${API_BASE_URL}/api/logout`,
-  USER_PROFILE: `${API_BASE_URL}/api/user/profile`,
+  USER_PROFILE: `${API_BASE_URL}/api/profile`,
   COMPANIES: `${API_BASE_URL}/api/companies`,
   LOYALTY_PROGRAMS: `${API_BASE_URL}/api/loyalty-programs`,
   LOYALTY_RULES: `${API_BASE_URL}/api/loyalty-rules`,

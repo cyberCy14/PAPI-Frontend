@@ -1,4 +1,3 @@
-// screens/PersonalInfoScreen.js
 import React, { useContext, useState } from 'react';
 import {
   View,
@@ -15,6 +14,7 @@ import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { UserContext } from '../context/UserContext';
 import { Ionicons, Feather, MaterialIcons } from '@expo/vector-icons';
+import { API_BASE_URL } from '../config';
 
 export default function PersonalInfoScreen({ navigation }) {
   const { user, updateUser } = useContext(UserContext);
@@ -63,6 +63,14 @@ export default function PersonalInfoScreen({ navigation }) {
     }
   };
 
+  const getImageSource = (img) => {
+    if (!img) return null;
+    if (img.uri) return { uri: img.uri};
+    return {uri: img};
+  }
+
+
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
@@ -79,7 +87,10 @@ export default function PersonalInfoScreen({ navigation }) {
         <TouchableOpacity onPress={pickImage}>
           <View style={styles.imageWrapper}>
             {form.image ? (
-              <Image source={form.image.uri ? { uri: form.image.uri } : form.image} style={styles.avatar} />
+             <Image 
+  source={getImageSource(form.image) || require('../assets/avatar.png')} 
+  style={styles.avatar}
+/>
             ) : (
               <Ionicons name="person" size={80} color="#ccc" />
             )}

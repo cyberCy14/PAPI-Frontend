@@ -1,4 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { API_BASE_URL } from '../config';
 import {
   SafeAreaView,
   View,
@@ -15,7 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { Picker } from '@react-native-picker/picker';
-import * as ImagePicker from 'expo-image-picker'; // Import image picker
+import * as ImagePicker from 'expo-image-picker'; 
 import { UserContext } from '../context/UserContext';
 
 export default function RegisterScreen({ navigation }) {
@@ -31,9 +33,8 @@ export default function RegisterScreen({ navigation }) {
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showGenderPicker, setShowGenderPicker] = useState(false);
-  const [profileImage, setProfileImage] = useState(null); // Save selected image
+  const [profileImage, setProfileImage] = useState(null); 
 
-  // Update form when user data changes (for when user navigates back from profile)
   useEffect(() => {
     setForm({
       name: user.name || '',
@@ -46,34 +47,34 @@ export default function RegisterScreen({ navigation }) {
     setProfileImage(user.image || null);
   }, [user.name, user.phone, user.address, user.place, user.dob, user.gender, user.image]);
 
-  // Function to launch image picker
+  
   const pickImage = async () => {
     console.log('Image picker triggered');
-    // Ask for permission
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     console.log('Permission result:', permissionResult);
+
     if (permissionResult.granted === false) {
       alert('Permission to access media library is required!');
       return;
     }
-
+  
     try {
       console.log('Launching image picker...');
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images, // Use old API
+        mediaTypes: ImagePicker.MediaTypeOptions.Images, 
         quality: 0.7,
-        allowsEditing: true, // Add this to see if it helps
+        allowsEditing: true,
+        exif: false,
       });
       console.log('Image picker result:', result);
       console.log('Result canceled:', result.canceled);
       console.log('Result assets:', result.assets);
       console.log('Result URI:', result.uri);
 
-      // Handle both old API (result.uri) and new API (result.assets)
       let selectedImage = null;
       if (!result.canceled) {
         if (result.uri) {
-          // Old API format
           selectedImage = {
             uri: result.uri,
             name: 'profile.jpg',
@@ -81,7 +82,6 @@ export default function RegisterScreen({ navigation }) {
           };
           console.log('Selected image URI (old API):', result.uri);
         } else if (result.assets && result.assets.length > 0) {
-          // New API format
           const asset = result.assets[0];
           selectedImage = {
             uri: asset.uri,
@@ -103,15 +103,26 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
-  // Helper to resolve image source
-  const getImageSource = (img) => {
-    if (!img) return null;
-    if (img.uri) return { uri: img.uri };
-    if (typeof img === 'string' && img.startsWith('profile_images/')) {
-      return { uri: `http://192.168.1.9:8000/storage/${img}` };
-    }
-    return null;
+
+    const getImageSource = (img) => {
+      if (!img) return null;
+
+      if (typeof img === "object" && img.uri) {
+        return { uri: img.uri };
+      }
+
+      if (typeof img === "string" && img.startsWith("http")) {
+        return { uri: img };
+      }
+
+      if (typeof img === "string") {
+        return { uri: `${API_BASE_URL}/storage/${img}` };
+      }
+
+      return null;
   };
+
+
 
   const handleChange = (key, val) => {
     setForm((f) => ({ ...f, [key]: val }));
@@ -123,13 +134,13 @@ export default function RegisterScreen({ navigation }) {
       return alert('Please fill in all fields.');
     }
 
-    // Ensure dob is a Date object
+    //date of birth
     let dobValue = dob;
     if (!(dob instanceof Date) && typeof dob === 'string') {
       dobValue = new Date(dob);
     }
 
-    // Ensure image is in correct format for FormData
+      //image
     let imageValue = null;
     if (profileImage && profileImage.uri) {
       imageValue = {
@@ -145,6 +156,8 @@ export default function RegisterScreen({ navigation }) {
         dob: dobValue,
         image: imageValue,
       });
+
+      console.log('Profile saved successfully, navigating to Home...');
       navigation.replace('AppTabs');
     } catch (err) {
       alert(`Error saving profile: ${err.message}`);
@@ -159,7 +172,7 @@ export default function RegisterScreen({ navigation }) {
     );
   }
 
-  if (!user.id) {
+  if (!user || Object.keys(user).length === 0) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
         <Text style={styles.loadingText}>Missing account info. Please sign up again.</Text>

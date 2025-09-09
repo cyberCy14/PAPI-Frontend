@@ -30,6 +30,7 @@ import InsightsScreen from './screens/InsightsScreen';
 import TransactionHistoryScreen from './screens/TransactionHistoryScreen';
 import AddTransactionScreen from './screens/AddTransactionScreen';
 import ScanScreen from './screens/ScanScreen';
+import TransactionResultScreen from './screens/TransactionResultScreen';
 import CustomTabBar from './navigation/CustomTabBar';
 import PersonalInfoScreen from './screens/PersonalInfoScreen';
 import AboutScreen from './screens/AboutScreen';
@@ -125,10 +126,13 @@ export default function App() {
             <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Splash">
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen name="Welcome" component={WelcomeScreen} />
+
+
               <Stack.Screen name="Login" component={LoginScreen} />
               <Stack.Screen name="Signup" component={SignupScreen} />
               <Stack.Screen name="Register" component={RegisterScreen} />
               <Stack.Screen name="AppTabs" component={AuthWrapper} />
+
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
               <Stack.Screen name="InsightsScreen" component={InsightsScreen} />
@@ -139,7 +143,9 @@ export default function App() {
               <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
               <Stack.Screen name="About" component={AboutScreen} />
               <Stack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
-           
+              <Stack.Screen name="ScanScreen" component={ScanScreen} />
+              <Stack.Screen name="TransactionResultScreen" component={TransactionResultScreen} />
+
             </Stack.Navigator>
           </NavigationContainer>
          

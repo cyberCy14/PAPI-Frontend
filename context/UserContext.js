@@ -19,10 +19,14 @@ export const UserProvider = ({ children }) => {
   const [profileExists, setProfileExists] = useState(false);
   const [loading, setLoading] = useState(true);
 
+
+  
   // Fetch user profile from backend
   const fetchUserProfile = async () => {
-    if (!token) return;
+    if (!token){ console.log('No token available!'); return null};
+
     setLoading(true);
+
     try {
       const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
         headers: {
@@ -30,28 +34,47 @@ export const UserProvider = ({ children }) => {
           'Accept': 'application/json',
         },
       });
+
+
+      console.log('Status:', res.status);
+
       if (!res.ok) throw new Error('Failed to fetch profile');
+
       const data = await res.json();
-      setUser(data.user);
+      console.log('User profile response: ', data);
+      
+
+      const mergedUser = {
+        ...data.user,
+        ...(data.profile || data.user?.profile || {}),
+      }
+
+      // setUser(data.user);
+      setUser(mergedUser);
+
       const complete =
-        data.user.name?.trim() &&
-        data.user.phone?.trim() &&
-        data.user.address?.trim() &&
-        data.user.place?.trim() &&
-        data.user.dob &&
-        data.user.gender?.trim();
-      setProfileExists(Boolean(complete));
+        !!mergedUser.name?.trim() &&
+        !!mergedUser.phone?.trim() &&
+        !!mergedUser.address?.trim() &&
+        !!mergedUser.place?.trim() &&
+        !!mergedUser.dob &&
+        !!mergedUser.gender?.trim();
+      setProfileExists(mergedUser, complete);
+      // return data.user;
     } catch (err) {
       setProfileExists(false);
+      return null;
     }
     setLoading(false);
   };
+
+
+
 
   useEffect(() => {
     if (token) {
       fetchUserProfile();
     } else {
-      // Reset user data when token is null (logout)
       setUser({
         name: '',
         email: '',
@@ -67,62 +90,86 @@ export const UserProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Update user profile via backend API (supports image upload)
-  const updateUser = async (updates) => {
-    if (!token) throw new Error('No authenticated user to update');
-    console.log('updateUser called with:', updates);
-    const formData = new FormData();
-    formData.append('name', updates.name?.trim() || '');
-    formData.append('email', updates.email?.trim() || '');
-    formData.append('phone', updates.phone?.trim() || '');
-    formData.append('address', updates.address?.trim() || '');
-    formData.append('place', updates.place?.trim() || '');
-    // Format dob as YYYY-MM-DD if it's a Date object
-    let dob = updates.dob;
-    if (dob instanceof Date) {
-      dob = dob.toISOString().split('T')[0];
-    }
-    formData.append('dob', dob || '');
-    formData.append('gender', updates.gender?.trim() || '');
-    if (updates.image && updates.image.uri) {
-      console.log('Adding image to FormData:', updates.image);
-      formData.append('image', {
-        uri: updates.image.uri,
-        name: 'profile.jpg',
-        type: 'image/jpeg',
-      });
-    } else {
-      console.log('No image to upload');
-    }
 
-    console.log('Sending request to backend...');
-    const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json',
-        // 'Content-Type' should NOT be set when using FormData in React Native
-      },
-      body: formData,
+
+
+  // Update user profile via backend API
+ const updateUser = async (updates) => {
+  if (!token) throw new Error('No authenticated user to update');
+  console.log('updateUser called with:', updates);
+
+  const formData = new FormData();
+  formData.append('name', updates.name?.trim() || '');
+  formData.append('phone', updates.phone?.trim() || '');
+  formData.append('address', updates.address?.trim() || '');
+  formData.append('place', updates.place?.trim() || '');
+
+  let dob = updates.dob;
+  if (dob instanceof Date) dob = dob.toISOString().split('T')[0];
+  formData.append('dob', dob || '');
+
+  formData.append('gender', updates.gender?.trim() || '');
+
+
+   if (updates.image && updates.image.uri) {
+    console.log("Adding image to FormData:", updates.image);
+
+    formData.append("image", {
+      uri: updates.image.uri, 
+      name:
+        updates.image.fileName || updates.image.name || `profile_${Date.now()}.jpg`,
+      type: updates.image.type || "image/jpeg",
     });
-    console.log('Backend response status:', res.status);
-    if (!res.ok) {
-      const errorText = await res.text();
-      console.log('Backend error:', errorText);
-      throw new Error('Failed to update profile');
-    }
-    const data = await res.json();
-    console.log('Backend response data:', data);
-    setUser(data.user);
-    const complete =
-      data.user.name?.trim() &&
-      data.user.phone?.trim() &&
-      data.user.address?.trim() &&
-      data.user.place?.trim() &&
-      data.user.dob &&
-      data.user.gender?.trim();
-    setProfileExists(Boolean(complete));
+  }
+
+
+  console.log('📡 Sending profile update request...');
+  const res = await fetch(API_ENDPOINTS.USER_PROFILE, {
+    method: 'POST', 
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+    },
+    body: formData,
+  });
+
+  console.log('LOG Backend response status:', res.status);
+
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    const text = await res.text();
+    console.log('Backend non-JSON response:', text);
+    throw new Error('Invalid server response');
+  }
+
+  console.log('LOG Backend response data:', data);
+
+  if (!res.ok) {
+    throw new Error(data.message || 'Failed to update profile');
+  }
+
+  // setUser({
+  //   ...data.user,
+  //   ...data.profile,
+  // });
+
+  // setProfileExists(true);
+
+  // return data.user;
+
+  const mergedUser = {
+    ...user,       
+    ...(data.user || {}),
+    ...(data.profile || {}),
   };
+
+  setUser(mergedUser);
+  setProfileExists(true);
+
+  return mergedUser; 
+};
 
 
 
