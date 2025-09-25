@@ -43,69 +43,6 @@ export default function LoyaltyPointScreen() {
     })();
   }, []);
 
-  // async function loadBalances() {
-  //   // setLoading(true);
-  //   try {
-  //     const token = await AsyncStorage.getItem("authToken");
-  //     const userRaw = await AsyncStorage.getItem("user");
-  //     if (!userRaw) {
-  //       setCompanies([]);
-  //       return;
-  //     }
-  //     const user = JSON.parse(userRaw);
-  //     const customerId = user.id;
-
-  //     // const url = `${API_BASE_URL}/api/loyalty/customer-company-balances?customer_id=${customerId}`;
-  //     const url = `${API_BASE_URL}/api/loyalty/customer-company-balances`;
-  //     const res = await fetch(url, {
-  //       // headers: {
-  //       //   Accept: "application/json",
-  //       //   "Content-Type": "application/json",
-  //       //   ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  //       // },
-  //        headers: {
-  //         "Accept": "application/json",
-  //         "Authorization": `Bearer ${token}`
-  //       }
-  //     });
-
-  //     if (!res.ok) {
-  //       const text = await res.text();
-  //       console.error("Server error (Loyalty):", res.status, text);
-  //       setCompanies([]);
-  //       return;
-  //     }
-
-  //     const json = await res.json();
-  //     const rawList = Array.isArray(json) ? json : json.data ?? [];
-
-  //     const mapped = rawList.map((item) => {
-  //       const companyObj = item.company ?? null;
-  //       // const transactions = item.transactions ?? companyObj?.customer_points ?? [];
-  //       return {
-  //         raw: item,
-  //         id: companyObj?.id ?? item.company_id ?? Math.random(),
-  //         name: companyObj?.company_name ?? companyObj?.name ?? `Company ${item.company_id}`,
-  //         displayName: companyObj?.display_name ?? "",
-  //         logo: companyObj?.company_logo ? { uri: companyObj.company_logo } : null,
-  //         points: item.total_balance ?? item.totalBalance ?? item.balance ?? 0,
-          
-  //        transactions: item.transactions ?? []
-
-          
-  //       };
-  //     });
-
-  //     setCompanies(mapped);
-  //   } catch (err) {
-  //     console.error("Error fetching balances:", err);
-  //     setCompanies([]);
-  //   } finally {
-  //     setLoading(false);
-  //     setRefreshing(false);
-  //   }
-  // }
-
   async function loadBalances() {
   try {
     const token = await AsyncStorage.getItem("authToken");
@@ -218,7 +155,6 @@ export default function LoyaltyPointScreen() {
                 <Text style={styles.transCount}>{(item.transactions || []).length} transactions</Text>
               </View>
               <View style={styles.pointsPill}>
-                {/* <Ionicons name="star" size={14} color="#fff" /> */}
                 <Text style={styles.pointsText}>{item.points}</Text>
               </View>
             </View>

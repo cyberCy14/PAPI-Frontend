@@ -30,7 +30,6 @@ export default function PersonalInfoScreen({ navigation }) {
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
 
-  // Don't render if no user - AuthWrapper will handle navigation
   if (!user || !user.name) {
     return null;
   }

@@ -1,4 +1,3 @@
-// CompanyTransactScreen.js
 import React, { useMemo, useState, useEffect } from "react";
 import {
   SafeAreaView,
@@ -41,10 +40,8 @@ export default function CompanyTransactScreen() {
     })();
   }, []);
 
-  // Source transactions only from the passed company object
   const transactions = company?.transactions ?? [];
 
-  // Normalize and sort newest-first
   const normalized = useMemo(() => {
     return transactions
       .map((t) => {
@@ -56,7 +53,6 @@ export default function CompanyTransactScreen() {
       .sort((a, b) => (b._dateObj?.getTime() ?? 0) - (a._dateObj?.getTime() ?? 0));
   }, [transactions]);
 
-  // Filter by search (type / rule name / amount)
   const filtered = useMemo(() => {
     if (!searchQuery) return normalized;
     const q = searchQuery.toLowerCase();
@@ -68,7 +64,6 @@ export default function CompanyTransactScreen() {
     });
   }, [normalized, searchQuery]);
 
-  // Group by dayKey
   const grouped = useMemo(() => {
     const map = {};
     filtered.forEach((t) => {
@@ -77,7 +72,7 @@ export default function CompanyTransactScreen() {
       map[key].push(t);
     });
     return Object.keys(map)
-      .sort((a, b) => (a < b ? 1 : -1)) // newest day first
+      .sort((a, b) => (a < b ? 1 : -1)) 
       .map((day) => ({ day, txns: map[day] }));
   }, [filtered]);
 

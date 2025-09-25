@@ -51,29 +51,22 @@ const REWARDS_CARDS = [
 export default function LoyaltyScreen({ navigation }) {
   const { user } = useContext(UserContext);
   const { loyaltyData, transactions, rewards, loading, refreshLoyaltyData, debouncedRefresh } = useContext(LoyaltyContext);
-  const [inviteCode, setInviteCode] = useState('PAPI1234'); // Default invite code
   const inviteSliderRef = useRef(null);
   const rewardsSliderRef = useRef(null);
   const [inviteIndex, setInviteIndex] = useState(0);
   const [rewardsIndex, setRewardsIndex] = useState(0);
   const [error, setError] = useState(null);
   const lastRefreshTimeRef = useRef(0);
-  // const [companies, setCompanies] = useState([]);
   const { companies } = useContext(LoyaltyContext);
   
 
-  // Don't render if no user - AuthWrapper will handle navigation
   if (!user || !user.name) {
     return null;
   }
 
-  // Refresh data when screen comes into focus (with cooldown)
   useFocusEffect(
     useCallback(() => {
-      // Disable auto-refresh to prevent infinite loops
-      // Only refresh manually through the refresh button
       return () => {
-        // Cleanup if needed
       };
     }, [])
   );
@@ -107,7 +100,6 @@ const totalPoints = companies?.reduce((sum, c) => sum + (c.points || 0), 0);
   
 
 
-  // Handle refresh with error handling
   const handleRefresh = async () => {
     try {
       setError(null);
@@ -159,17 +151,13 @@ const totalPoints = companies?.reduce((sum, c) => sum + (c.points || 0), 0);
                   )}
                 </Text>
               </TouchableOpacity>
-              {/* <Text style={styles.balanceSub} numberOfLines={1} adjustsFontSizeToFit>
-                {loyaltyData?.next_reward > 0 ? `${loyaltyData.next_reward} points till your next reward` : ''}
-              </Text> */}
+              
             </View>
           </View>
-          {/* Dashed line divider */}
           <View style={styles.dashedLine} />
           <Text style={styles.balanceUserAligned}>{username}</Text>
         </ImageBackground>
 
-        {/* Rewards Slider */}
         <FlatList
           data={rewards || []}
           keyExtractor={item => item.id?.toString() || Math.random().toString()}
@@ -213,7 +201,6 @@ const totalPoints = companies?.reduce((sum, c) => sum + (c.points || 0), 0);
               <TouchableOpacity style={styles.inviteBtn}>
                   <Text style={styles.inviteBtnText}>{item.btn}</Text>
                 </TouchableOpacity>
-              {/* Pagination Dots */}
               <View style={styles.pagination}>
                 {INVITE_CARDS.map((_, index) => (
                   <View
@@ -268,115 +255,69 @@ const totalPoints = companies?.reduce((sum, c) => sum + (c.points || 0), 0);
           )}
         />
 
-        {/* Recent Activity */}
-        {/* <Text style={styles.activityTitle}>Recent Activity</Text>
 
-        <View style={{ marginTop: 8 }}>
-        {loading ? (
-          <ActivityIndicator size="small" color="#000" />
-        ) : !transactions || transactions.length === 0 ? (
-          <Text style={{ textAlign: 'center', color: '#888' }}>No recent activity.</Text>
-        ) : (
-          transactions.map(item => (
+    {/* Recent Activity */}
+    <Text style={styles.activityTitle}>Recent Activity</Text>
+
+    <View style={{ marginTop: 8 }}>
+      {loading ? (
+        <ActivityIndicator size="small" color="#000" />
+      ) : !transactions || transactions.length === 0 ? (
+        <Text style={{ textAlign: 'center', color: '#888' }}>
+          No recent activity.
+        </Text>
+      ) : (
+        transactions.map(item => {
+          const isEarn = item.transaction_type === 'earning';
+
+          let description = '';
+          if (item.redemption_description) {
+            description = item.redemption_description;
+          } else if (item.rule_breakdown?.length > 0) {
+            description = item.rule_breakdown[0].rule_name || '';
+          }
+
+          return (
             <View
               key={item.id}
               style={[
                 styles.activityRow,
-                item.type === 'earn' ? styles.activityEarn : styles.activityRedeem,
+                { borderBottomWidth: 1, borderColor: '#eee', paddingVertical: 8 }
               ]}
             >
+              {/* Left side */}
               <View style={styles.activityLeft}>
+                <Text style={styles.activityStatus}>
+                  {isEarn
+                    ? `You earned ${item.points_earned} points`
+                    : `You redeemed ${Math.abs(item.points_earned)} points`}
+                </Text>
+                {!!description && (
+                  <Text style={styles.activityDesc}>{description}</Text>
+                )}
+                <Text style={styles.activityMeta}>
+                  {item.transaction_date}
+                </Text>
+              </View>
+
+              {/* Right side */}
+              <View style={styles.activityRight}>
                 <Text
                   style={[
-                    styles.activityStatus,
-                    item.type === 'earn' ? styles.earned : styles.redeemed,
+                    styles.pointsText,
+                    isEarn ? styles.earned : styles.redeemed,
                   ]}
                 >
-                  {item.type === 'earn'
-                    ? `You earned ${item.points} points`
-                    : `You redeemed ${item.points} points`}
+                  {isEarn
+                    ? `+${item.points_earned}`
+                    : `-${Math.abs(item.points_earned)}`}
                 </Text>
-                <Text style={styles.activityDesc}>{item.notes || item.source || 'Loyalty transaction'}</Text>
-              </View>
-              <View style={styles.activityRight}>
-                <View
-                  style={[
-                    styles.pointsCircle,
-                    item.type === 'earn' ? styles.earnedBg : styles.redeemedBg,
-                  ]}
-                >
-                  <Text style={styles.pointsText}>
-                    {item.type === 'earn' ? `+${item.points}` : `-${item.points}`}
-                  </Text>
-                </View>
               </View>
             </View>
-          ))
-        )}
-        </View> */}
-
-{/* Recent Activity */}
-<Text style={styles.activityTitle}>Recent Activity</Text>
-
-<View style={{ marginTop: 8 }}>
-  {loading ? (
-    <ActivityIndicator size="small" color="#000" />
-  ) : !transactions || transactions.length === 0 ? (
-    <Text style={{ textAlign: 'center', color: '#888' }}>
-      No recent activity.
-    </Text>
-  ) : (
-    transactions.map(item => {
-      const isEarn = item.transaction_type === 'earning';
-
-      let description = '';
-      if (item.redemption_description) {
-        description = item.redemption_description;
-      } else if (item.rule_breakdown?.length > 0) {
-        description = item.rule_breakdown[0].rule_name || '';
-      }
-
-      return (
-        <View
-          key={item.id}
-          style={[
-            styles.activityRow,
-            { borderBottomWidth: 1, borderColor: '#eee', paddingVertical: 8 }
-          ]}
-        >
-          {/* Left side */}
-          <View style={styles.activityLeft}>
-            <Text style={styles.activityStatus}>
-              {isEarn
-                ? `You earned ${item.points_earned} points`
-                : `You redeemed ${Math.abs(item.points_earned)} points`}
-            </Text>
-            {!!description && (
-              <Text style={styles.activityDesc}>{description}</Text>
-            )}
-            <Text style={styles.activityMeta}>
-              {item.transaction_date}
-            </Text>
-          </View>
-
-          {/* Right side */}
-          <View style={styles.activityRight}>
-            <Text
-              style={[
-                styles.pointsText,
-                isEarn ? styles.earned : styles.redeemed,
-              ]}
-            >
-              {isEarn
-                ? `+${item.points_earned}`
-                : `-${Math.abs(item.points_earned)}`}
-            </Text>
-          </View>
-        </View>
-      );
-    })
-  )}
-</View>
+          );
+        })
+      )}
+    </View>
 
 
       </ScrollView>

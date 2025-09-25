@@ -26,7 +26,6 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
 
-  // Animated label state
   const emailAnim = useRef(new Animated.Value(0)).current;
   const passwordAnim = useRef(new Animated.Value(0)).current;
 
@@ -88,7 +87,7 @@ export default function LoginScreen() {
       if (profileData && profileData.complete) {
         navigation.replace("AppTabs");
       } else {
-        navigation.replace("Register"); // profile incomplete, go to Register
+        navigation.replace("Register"); 
       }
     } catch (err) {
       Alert.alert("Login Failed", err.message || "Login failed");

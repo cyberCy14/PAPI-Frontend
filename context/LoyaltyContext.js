@@ -90,29 +90,6 @@ export const LoyaltyProvider = ({ children }) => {
     }
   }, [token]);
 
-  // Fetch user's loyalty transactions
-  // const fetchTransactions = useCallback(async () => {
-  //   if (!token) return;
-    
-  //   console.log('LoyaltyContext: Fetching transactions');
-  //   try {
-  //     const response = await fetch(API_ENDPOINTS.USER_LOYALTY_TRANSACTIONS, {
-  //       headers: {
-  //         'Authorization': `Bearer ${token}`,
-  //         'Accept': 'application/json',
-  //       },
-  //     });
-      
-  //     if (response.ok) {
-  //       const data = await response.json();
-  //       setTransactions(data.transactions);
-  //       console.log('LoyaltyContext: Transactions fetched successfully');
-  //     }
-  //   } catch (error) {
-  //     console.error('Error fetching transactions:', error);
-  //   }
-  // }, [token]);
-
   const fetchTransactions = useCallback(async () => {
   if (!token) return;
   try {

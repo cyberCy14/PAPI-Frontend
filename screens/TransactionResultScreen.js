@@ -63,12 +63,7 @@ export default function TransactionResultScreen({ route, navigation }) {
           {transaction.points}
         </Text>
 
-        {/* <Text style={styles.label}>Balance:</Text>
-        <Text style={styles.value}> 
-        {transaction.balance !== undefined && transaction.balance !== null
-          ? transaction.balance
-          : "N/A"}
-      </Text> */}
+      
 
         <Text style={styles.label}>Status:</Text>
         <Text style={styles.value}>{transaction.status || "N/A"}</Text>

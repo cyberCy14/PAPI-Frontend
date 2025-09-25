@@ -15,14 +15,12 @@ export const ExpenseProvider = ({ children }) => {
     setExpenses([]);
   };
 
-  // Clear expenses when token is null (logout)
   useEffect(() => {
     if (!token) {
       clearExpenses();
     }
   }, [token]);
 
-  // ✅ Step 1: Function to calculate totals per budget category
   const getBudgetTotals = () => {
     const totals = {
       Food: 0,
