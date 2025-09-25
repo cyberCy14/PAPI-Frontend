@@ -20,6 +20,15 @@ export const UserProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
 
+  useEffect(() => {
+  const loadToken = async () => {
+    const savedToken = await AsyncStorage.getItem("token");
+    if (savedToken) setToken(savedToken);
+  };
+  loadToken();
+}, []);
+
+
   
   // Fetch user profile from backend
   const fetchUserProfile = async () => {

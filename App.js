@@ -135,6 +135,7 @@ export default function App() {
 
               <Stack.Screen name="AddTransaction" component={AddTransactionScreen} />
               <Stack.Screen name="TransactionHistory" component={TransactionHistoryScreen} />
+              <Stack.Screen name="BudgetScreen" component={BudgetScreen} />
               <Stack.Screen name="InsightsScreen" component={InsightsScreen} />
               <Stack.Screen name="LoyaltyPoints" component={LoyaltyPointsScreen} options={{ headerShown: false }} />
               <Stack.Screen name="Rewards" component={RewardsScreen} options={{ headerShown: false }} />

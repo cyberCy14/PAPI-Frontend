@@ -1,7 +1,7 @@
-import React, { useContext, useState, useRef } from 'react';
-import { UserContext } from '../context/UserContext';
-import { AuthContext } from '../context/AuthContext';
-import { useNavigation } from '@react-navigation/native';
+import React, { useContext, useState, useRef } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { UserContext } from "../context/UserContext"; 
+import { useNavigation } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -13,40 +13,23 @@ import {
   ActivityIndicator,
   Animated,
   Easing,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function LoginScreen() {
-  const { login, token } = useContext(AuthContext);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [passwordVisible, setPasswordVisible] = useState(false);
-  const { fetchUserProfile, profileExists } = useContext(UserContext);
+  const { login } = useContext(AuthContext);
+  const { fetchUserProfile } = useContext(UserContext);
   const navigation = useNavigation();
 
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
   // Animated label state
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
   const emailAnim = useRef(new Animated.Value(0)).current;
   const passwordAnim = useRef(new Animated.Value(0)).current;
 
-  const handleEmailFocus = () => {
-    setIsEmailFocused(true);
-    animateLabel(emailAnim, 1);
-  };
-  const handleEmailBlur = () => {
-    setIsEmailFocused(false);
-    if (!email) animateLabel(emailAnim, 0);
-  };
-  const handlePasswordFocus = () => {
-    setIsPasswordFocused(true);
-    animateLabel(passwordAnim, 1);
-  };
-  const handlePasswordBlur = () => {
-    setIsPasswordFocused(false);
-    if (!password) animateLabel(passwordAnim, 0);
-  };
   const animateLabel = (anim, toValue) => {
     Animated.timing(anim, {
       toValue,
@@ -56,110 +39,117 @@ export default function LoginScreen() {
     }).start();
   };
 
+  const handleEmailFocus = () => animateLabel(emailAnim, 1);
+  const handleEmailBlur = () => {
+    if (!email) animateLabel(emailAnim, 0);
+  };
+  const handlePasswordFocus = () => animateLabel(passwordAnim, 1);
+  const handlePasswordBlur = () => {
+    if (!password) animateLabel(passwordAnim, 0);
+  };
+
   const emailLabelStyle = {
-    position: 'absolute',
+    position: "absolute",
     left: 18,
     top: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
     fontSize: emailAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
-    color: emailAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
-    fontFamily: 'Sansation-Regular',
-    backgroundColor: 'white',
+    color: emailAnim.interpolate({ inputRange: [0, 1], outputRange: ["#888", "#061437"] }),
+    fontFamily: "Sansation-Regular",
+    backgroundColor: "white",
     paddingHorizontal: 4,
     zIndex: 1,
   };
+
   const passwordLabelStyle = {
-    position: 'absolute',
+    position: "absolute",
     left: 18,
     top: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [14, -10] }),
     fontSize: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 13] }),
-    color: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: ['#888', '#061437'] }),
-    fontFamily: 'Sansation-Regular',
-    backgroundColor: 'white',
+    color: passwordAnim.interpolate({ inputRange: [0, 1], outputRange: ["#888", "#061437"] }),
+    fontFamily: "Sansation-Regular",
+    backgroundColor: "white",
     paddingHorizontal: 4,
     zIndex: 1,
   };
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
-      Alert.alert('Error', 'Please enter both email and password.');
+      Alert.alert("Error", "Please enter both email and password.");
       return;
     }
+
     setLoading(true);
 
     try {
       await login(email.trim(), password);
-      // navigation.replace('AppTabs');
 
-      const result = await fetchUserProfile();
+      const profileData = await fetchUserProfile();
 
-      if(result && result.complete){
-        navigation.replace('AppTabs');
-      } else{
-        navigation.replace('Register');
+      if (profileData && profileData.complete) {
+        navigation.replace("AppTabs");
+      } else {
+        navigation.replace("Register"); // profile incomplete, go to Register
       }
-
-
-
     } catch (err) {
-      Alert.alert('Login Failed', err.message || 'Login failed');
+      Alert.alert("Login Failed", err.message || "Login failed");
     } finally {
       setLoading(false);
     }
   };
 
-
-
-
-  const handleGoogleLogin = () => {
-    // TODO: wire up Google sign-in here
-  };
-
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/logo.png')} style={styles.logo} />
+      {/* Logo */}
+      <Image source={require("../assets/logo.png")} style={styles.logo} />
       <Text style={styles.papi}>Papi</Text>
       <Text style={styles.heading}>WELCOME BACK</Text>
       <Text style={styles.subtitle}>Sign in to continue</Text>
-      {/* Email input with animated label */}
+
+      {/* Email input */}
       <View style={styles.inputContainer}>
         <Animated.Text style={emailLabelStyle}>Email</Animated.Text>
         <TextInput
           style={styles.input}
-          placeholder=""
           keyboardType="email-address"
           autoCapitalize="none"
           value={email}
           onChangeText={setEmail}
           onFocus={handleEmailFocus}
           onBlur={handleEmailBlur}
+          placeholder=""
           placeholderTextColor="#888"
         />
       </View>
-      {/* Password input with animated label */}
+
+      {/* Password input */}
       <View style={styles.inputContainer}>
         <Animated.Text style={passwordLabelStyle}>Password</Animated.Text>
         <View style={styles.passwordWrapper}>
           <TextInput
             style={styles.input}
-            placeholder=""
             secureTextEntry={!passwordVisible}
             value={password}
             onChangeText={setPassword}
             onFocus={handlePasswordFocus}
             onBlur={handlePasswordBlur}
+            placeholder=""
             placeholderTextColor="#888"
           />
           <TouchableOpacity
             style={styles.eyeIcon}
             onPress={() => setPasswordVisible(!passwordVisible)}
           >
-            <Ionicons name={passwordVisible ? 'eye' : 'eye-off'} size={20} color="#6B7280" />
+            <Ionicons name={passwordVisible ? "eye" : "eye-off"} size={20} color="#6B7280" />
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* Forgot Password */}
       <TouchableOpacity style={styles.forgotPassword}>
         <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
       </TouchableOpacity>
+
+      {/* Login Button */}
       <TouchableOpacity
         style={[styles.loginButton, loading && styles.loginButtonDisabled]}
         onPress={handleLogin}
@@ -171,18 +161,22 @@ export default function LoginScreen() {
           <Text style={styles.loginButtonText}>Log in</Text>
         )}
       </TouchableOpacity>
+
+      {/* Or with Google */}
       <View style={styles.orContainer}>
         <View style={styles.line} />
         <Text style={styles.orText}>Or continue with</Text>
         <View style={styles.line} />
       </View>
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-        <Image source={require('../assets/google.png')} style={styles.googleIcon} />
+
+      <TouchableOpacity style={styles.googleButton}>
+        <Image source={require("../assets/google.png")} style={styles.googleIcon} />
         <Text style={styles.googleButtonText}>Google</Text>
       </TouchableOpacity>
+
       <View style={styles.bottomRow}>
         <Text style={styles.bottomText}>Don't have an account? </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+        <TouchableOpacity onPress={() => navigation.navigate("Signup")}>
           <Text style={styles.registerLink}>Sign Up</Text>
         </TouchableOpacity>
       </View>

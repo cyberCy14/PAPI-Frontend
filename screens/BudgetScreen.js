@@ -1,28 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  FlatList,
-  ScrollView,
-  SafeAreaView,
-  ImageBackground,
-  Modal,
-  StyleSheet,
+  View, Text, TouchableOpacity, FlatList, ScrollView, SafeAreaView,
+  ImageBackground, Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useIsFocused, useRoute } from '@react-navigation/native'; 
 import { styles } from '../assets/styles/home.styles';
-import { baseStyles } from '../assets/styles/create.styles';
-import { fetchAllTransactions, fetchCategoryDetails } from '../context/fetchAirtable';
-import { StatusBar } from 'react-native';
-import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { COLORS } from '../constants/colors';
 import AnalyticsPreview from '../components/AnalyticsPreview';
-
+import { API_BASE_URL } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function BudgetScreen() {
   const navigation = useNavigation();
+  const route = useRoute();
+  const isFocused = useIsFocused();  
+
   const [incomeTotal, setIncomeTotal] = useState(0);
   const [expenseTotal, setExpenseTotal] = useState(0);
   const [liabilityTotal, setLiabilityTotal] = useState(0);
@@ -32,97 +25,94 @@ export default function BudgetScreen() {
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
 
+  const API_URL = `${API_BASE_URL}/api`;
+
+  const loadData = async () => {
+    try {
+      const token = await AsyncStorage.getItem('authToken'); 
+
+      const summaryRes = await fetch(`${API_URL}/financial-reports-summary`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const summary = await summaryRes.json();
+
+      setIncomeTotal(summary.income || 0);
+      setExpenseTotal(summary.expense || 0);
+      setLiabilityTotal(summary.liabilities || 0);
+      setAssetTotal(summary.assets || 0);
+      setNetProfit(summary.net_profit || 0);
+
+      const txRes = await fetch(`${API_URL}/financial-reports`, {
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const transactions = await txRes.json();
+
+      const sortedTx = transactions.sort(
+        (a, b) => new Date(b.transaction_date) - new Date(a.transaction_date)
+      );
+      setRecentTransactions(sortedTx.slice(0, 5)); 
+    } catch (err) {
+      console.error("Error loading data:", err);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      const inc = await fetchCategoryDetails('Income');
-      const exp = await fetchCategoryDetails('Expense');
-      const lia = await fetchCategoryDetails('Liability');
-      const ast = await fetchCategoryDetails('Asset');
-      const all = await fetchAllTransactions();
+    if (route.params?.newTransaction) {
+      const tx = route.params.newTransaction;
 
-      const sum = (rows) =>
-        rows.reduce((acc, item) => {
-          const key = Object.keys(item.fields).find((k) =>
-            k.toLowerCase().includes('amount')
-          );
-          return acc + (parseFloat(item.fields[key]) || 0);
-        }, 0);
+      let dateString = tx.transaction_date;
+      if(dateString.length === 10){
+        const now = new Date();
+        const time = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+        dateString = `${dateString} ${time}`;
+      }
 
-      setIncomeTotal(sum(inc));
-      setExpenseTotal(sum(exp));
-      setLiabilityTotal(sum(lia));
-      setAssetTotal(sum(ast));
-      setNetProfit(sum(inc) - sum(exp) - sum(lia));
+      const txWithDateTime = {
+        ...tx,
+        transaction_date: dateString
+      };
+      
+      // setRecentTransactions(prev => [tx, ...prev].slice(0, 5));
 
-      const sortedTx = all
-        .filter((tx) => tx.fields?.amount)
-        .sort((a, b) => new Date(b.fields.date) - new Date(a.fields.date));
-      setRecentTransactions(sortedTx.slice(0, 5));
-    };
+      setRecentTransactions(prev => {
+        const updated = [txWithDateTime, ...prev];
+        return updated
+          .sort((a,b) => new Date(b.transaction_date) - new Date(a.transaction_date))
+          .slice(0.5);
+      });
 
-    loadData();
-  }, []);
+      const amt = parseFloat(tx.amount);
+      if (tx.type === 'income') {
+        setIncomeTotal(prev => prev + amt);
+        setNetProfit(prev => prev + amt);
+      } else if (tx.type === 'expense') {
+        setExpenseTotal(prev => prev + amt);
+        setNetProfit(prev => prev - amt);
+      } else if (tx.type === 'asset') {
+        setAssetTotal(prev => prev + amt);
+      } else if (tx.type === 'liability') {
+        setLiabilityTotal(prev => prev + amt);
+      }
+
+      navigation.setParams({ newTransaction: null });
+    }
+  }, [route.params?.newTransaction]);
 
   useEffect(() => {
-    const loadData = async () => {
-      const mockTransactions = [
-        {
-          id: '1',
-          fields: {
-            description: 'Burger Purchase',
-            amount: 150,
-            date: new Date().toISOString(),
-            category: 'Expense',
-          },
-        },
-        {
-          id: '2',
-          fields: {
-            description: 'Freelance Work',
-            amount: 5000,
-            date: new Date().toISOString(),
-            category: 'Income',
-          },
-        },
-        {
-          id: '3',
-          fields: {
-            description: 'New Laptop',
-            amount: 30000,
-            date: new Date().toISOString(),
-            category: 'Asset',
-          },
-        },
-        {
-          id: '4',
-          fields: {
-            description: 'Burger Purchase',
-            amount: 150,
-            date: new Date().toISOString(),
-            category: 'Expense',
-          },
-        },
-        {
-          id: '5',
-          fields: {
-            description: 'Freelance Work',
-            amount: 5000,
-            date: new Date().toISOString(),
-            category: 'Liability',
-          },
-        },
-      ];
-
-      setRecentTransactions(mockTransactions);
-    };
-
-    loadData();
-  }, []);
+    if (isFocused) {
+      loadData();
+    }
+  }, [isFocused]);
 
   const renderTransaction = ({ item }) => {
-    const { description, amount, date, category } = item.fields;
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.transactionCard}
         onPress={() => {
           setSelectedTransaction(item);
@@ -131,15 +121,15 @@ export default function BudgetScreen() {
       >
         <View style={styles.transactionContent}>
           <View style={styles.transactionLeft}>
-            <Text style={styles.transactionTitle}>{description}</Text>
-            <Text style={styles.transactionCategory}>{category}</Text>
+            <Text style={styles.transactionTitle}>{item.transaction_title}</Text>
+            <Text style={styles.transactionCategory}>{item.type}</Text>
           </View>
           <View style={styles.transactionRight}>
             <Text style={styles.transactionAmount}>
-              ₱{parseFloat(amount).toLocaleString()}
+              ₱{parseFloat(item.amount).toLocaleString()}
             </Text>
             <Text style={styles.transactionDate}>
-              {new Date(date).toLocaleDateString()}
+              {new Date(item.transaction_date).toLocaleDateString()}
             </Text>
           </View>
         </View>
@@ -151,10 +141,13 @@ export default function BudgetScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* Header */}
       <View style={[styles.header, { alignItems: 'center' }]}>
         <Text style={styles.headerTitle}>Business Financial Report</Text>
       </View>
+
       <ScrollView contentContainerStyle={[styles.content, { paddingTop: 20 }]}>
+        {/* Net Profit Card */}
         <View style={styles.balanceCard}>
           <ImageBackground
             source={image}
@@ -165,55 +158,41 @@ export default function BudgetScreen() {
           <View style={styles.balanceTitle}>
             <Text style={styles.balanceTitle}>Net Profit</Text>
           </View>
-
           <Text style={styles.balanceAmount}>
-            ₱50,000.00
+            ₱{netProfit.toLocaleString()}
           </Text>
-          
+
           <View style={styles.balanceStats}>
             <View style={styles.balanceStatItem}>
               <Text style={styles.balanceStatLabel}>Income</Text>
-              <Text style={styles.balanceStatAmount}>
-                ₱25,122.00
-              </Text>
+              <Text style={styles.balanceStatAmount}>₱{incomeTotal.toLocaleString()}</Text>
             </View>
-            <View style={[styles.balanceStatItem]}>
+            <View style={styles.balanceStatItem}>
               <Text style={styles.balanceStatLabel}>Expense</Text>
-              <Text style={styles.balanceStatAmount}>
-                ₱15,067.00
-              </Text>
+              <Text style={styles.balanceStatAmount}>₱{expenseTotal.toLocaleString()}</Text>
             </View>
           </View>
 
           <View style={[styles.balanceStats, { marginTop: 12 }]}>
             <View style={styles.balanceStatItem}>
               <Text style={styles.balanceStatLabel}>Asset</Text>
-              <Text style={styles.balanceStatAmount}>
-                ₱24,878.00
-              </Text>
+              <Text style={styles.balanceStatAmount}>₱{assetTotal.toLocaleString()}</Text>
             </View>
             <View style={styles.balanceStatItem}>
               <Text style={styles.balanceStatLabel}>Liability</Text>
-              <Text style={styles.balanceStatAmount}> ₱9,500.00
-              </Text>
+              <Text style={styles.balanceStatAmount}>₱{liabilityTotal.toLocaleString()}</Text>
             </View>
           </View>
         </View>
 
+        {/* Transactions List */}
         <View style={{ marginHorizontal: -25 }}>
           <View style={styles.bottomContainer}>
             <View style={styles.transactionsContainer}>
-              <View
-                style={[
-                  styles.transactionsHeaderContainer,
-                  { justifyContent: 'space-between' },
-                ]}
-              >
+              <View style={[styles.transactionsHeaderContainer, { justifyContent: 'space-between' }]}>
                 <Text style={styles.sectionTitle}>Recent Transactions</Text>
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('TransactionHistory')}
-                >
-                  <Text style={{ textAlign: "center", fontFamily: 'Sansation-Regular'}}>
+                <TouchableOpacity onPress={() => navigation.navigate('TransactionHistory')}>
+                  <Text style={{ textAlign: "center", fontFamily: 'Sansation-Regular' }}>
                     See All
                   </Text>
                 </TouchableOpacity>
@@ -221,74 +200,60 @@ export default function BudgetScreen() {
 
               {recentTransactions.length === 0 ? (
                 <View style={styles.emptyState}>
-                  <Ionicons
-                    name="file-tray-outline"
-                    size={40}
-                    color="#ccc"
-                    style={styles.emptyStateIcon}
-                  />
+                  <Ionicons name="file-tray-outline" size={40} color="#ccc" style={styles.emptyStateIcon} />
                   <Text style={styles.emptyStateTitle}>No Transactions</Text>
-                  <Text style={styles.emptyStateText}>
-                    Your most recent transactions will appear here.
-                  </Text>
+                  <Text style={styles.emptyStateText}>Your most recent transactions will appear here.</Text>
                 </View>
               ) : (
                 <FlatList
                   data={recentTransactions}
                   renderItem={renderTransaction}
-                  keyExtractor={(item) => item.id}
+                  keyExtractor={(item) => item.id.toString()}
                   scrollEnabled={false}
                   contentContainerStyle={styles.transactionsListContent}
                 />
               )}
             </View>
-            <AnalyticsPreview 
+            <AnalyticsPreview
               incomeTotal={incomeTotal}
               expenseTotal={expenseTotal}
               recentTransactions={recentTransactions}
             />
           </View>
         </View>
-        
       </ScrollView>
 
-      <Modal
-        visible={isModalVisible}
-        animationType="slide"
-        transparent={true}
+      {/* Transaction Modal */}
+      <Modal 
+        visible={isModalVisible} 
+        animationType="slide" 
+        transparent={true} 
         onRequestClose={() => setIsModalVisible(false)}
       >
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             {selectedTransaction && (
               <>
-                <TouchableOpacity
-                  style={[styles.closeButton]}
-                  onPress={() => setIsModalVisible(false)}
-                >
+                <TouchableOpacity style={styles.closeButton} onPress={() => setIsModalVisible(false)}>
                   <Ionicons name="close" size={20} color={COLORS.white} />
                 </TouchableOpacity>
                 <Text style={styles.modalTitle}>Transaction Details</Text>
-                
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Description:</Text>
-                  <Text style={styles.detailValue}>{selectedTransaction.fields.description}</Text>
+                  <Text style={styles.detailValue}>{selectedTransaction.transaction_title}</Text>
                 </View>
-                
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Amount:</Text>
-                  <Text style={styles.detailValue}>₱{parseFloat(selectedTransaction.fields.amount).toLocaleString()}</Text>
+                  <Text style={styles.detailValue}>₱{parseFloat(selectedTransaction.amount).toLocaleString()}</Text>
                 </View>
-                
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Category:</Text>
-                  <Text style={styles.detailValue}>{selectedTransaction.fields.category}</Text>
+                  <Text style={styles.detailLabel}>Type:</Text>
+                  <Text style={styles.detailValue}>{selectedTransaction.type}</Text>
                 </View>
-                
                 <View style={styles.detailRow}>
                   <Text style={styles.detailLabel}>Date:</Text>
                   <Text style={styles.detailValue}>
-                    {new Date(selectedTransaction.fields.date).toLocaleDateString()}
+                    {new Date(selectedTransaction.transaction_date).toLocaleDateString()}
                   </Text>
                 </View>
               </>
@@ -297,14 +262,13 @@ export default function BudgetScreen() {
         </View>
       </Modal>
 
-    
-      <TouchableOpacity
-        style={styles.addButton}
+      {/* Floating Button */}
+      <TouchableOpacity 
+        style={styles.addButton} 
         onPress={() => navigation.navigate('AddTransaction')}
       >
         <Ionicons name="add" size={25} color="#fff" />
       </TouchableOpacity>
-
     </SafeAreaView>
   );
 }

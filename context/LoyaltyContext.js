@@ -1,6 +1,9 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { AuthContext } from './AuthContext';
 import { API_ENDPOINTS } from '../config';
+import { API_BASE_URL } from '../config';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 export const LoyaltyContext = createContext();
 
@@ -17,8 +20,54 @@ export const LoyaltyProvider = ({ children }) => {
   const [rewards, setRewards] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  
 
-  // Fetch loyalty summary (points, next reward, etc.)
+
+  const fetchCompanies = useCallback(async () => {
+  if (!token) return;
+
+  try {
+    const userRaw = await AsyncStorage.getItem("user");
+    const user = userRaw ? JSON.parse(userRaw) : null;
+    if (!user) return;
+
+    const url = `${API_BASE_URL}/api/loyalty/customer-company-balances?customer_id=${user.id}`;
+    // const url = `${API_BASE_URL}/api/loyalty/customer-points/${user.id}`
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : data.data ?? [];
+
+      const mapped = list.map(item => {
+        const companyObj = item.company ?? {};
+        return {
+          id: companyObj.id ?? item.company_id,
+          name: companyObj.company_name ?? `Company ${item.company_id}`,
+          logo: companyObj.company_logo ? { uri: companyObj.company_logo } : null,
+          points: item.total_balance ?? 0,
+          transactions: item.transactions ?? [] 
+        };
+      });
+
+      setCompanies(mapped);
+
+      const total = mapped.reduce((sum, c) => sum + (c.points || 0), 0);
+      setLoyaltyData(prev => ({ ...prev, points: total }));
+    }
+  } catch (err) {
+    console.error("Error fetching company balances:", err);
+  }
+}, [token]);
+
+
+
   const fetchLoyaltySummary = useCallback(async () => {
     if (!token) return;
     
@@ -42,27 +91,62 @@ export const LoyaltyProvider = ({ children }) => {
   }, [token]);
 
   // Fetch user's loyalty transactions
-  const fetchTransactions = useCallback(async () => {
-    if (!token) return;
+  // const fetchTransactions = useCallback(async () => {
+  //   if (!token) return;
     
-    console.log('LoyaltyContext: Fetching transactions');
-    try {
-      const response = await fetch(API_ENDPOINTS.USER_LOYALTY_TRANSACTIONS, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-      });
+  //   console.log('LoyaltyContext: Fetching transactions');
+  //   try {
+  //     const response = await fetch(API_ENDPOINTS.USER_LOYALTY_TRANSACTIONS, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Accept': 'application/json',
+  //       },
+  //     });
       
-      if (response.ok) {
-        const data = await response.json();
-        setTransactions(data.transactions);
-        console.log('LoyaltyContext: Transactions fetched successfully');
-      }
-    } catch (error) {
-      console.error('Error fetching transactions:', error);
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       setTransactions(data.transactions);
+  //       console.log('LoyaltyContext: Transactions fetched successfully');
+  //     }
+  //   } catch (error) {
+  //     console.error('Error fetching transactions:', error);
+  //   }
+  // }, [token]);
+
+  const fetchTransactions = useCallback(async () => {
+  if (!token) return;
+  try {
+    const userRaw = await AsyncStorage.getItem("user");
+    const user = userRaw ? JSON.parse(userRaw) : null;
+    if (!user) return;
+
+    const url = `${API_BASE_URL}/api/loyalty/customer-points/${user.id}`;
+    const res = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (res.ok) {
+      const json = await res.json();
+      const txns = json.transactions || [];
+
+      const sorted = txns.sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at)
+      ).slice(0, 5);
+
+      setTransactions(sorted);
+    } else {
+      console.error("Fetch Customer Points failed:", res.status, await res.text());
     }
-  }, [token]);
+  } catch (err) {
+    console.error("Error fetching customer points:", err);
+  }
+}, [token]);
+
+
+
 
   // Fetch available rewards
   const fetchRewards = useCallback(async () => {
@@ -122,7 +206,7 @@ export const LoyaltyProvider = ({ children }) => {
   const refreshLoyaltyData = useCallback(async () => {
     if (isRefreshing) {
       console.log('LoyaltyContext: Skipping refresh - already refreshing');
-      return; // Prevent multiple simultaneous calls
+      return; 
     }
     
     console.log('LoyaltyContext: Starting refresh at', new Date().toISOString());
@@ -130,22 +214,21 @@ export const LoyaltyProvider = ({ children }) => {
     setLoading(true);
     try {
       await Promise.all([
-        fetchLoyaltySummary(),
+        // fetchLoyaltySummary(),
+        fetchCompanies(), 
         fetchTransactions(),
         fetchRewards(),
       ]);
       console.log('LoyaltyContext: Refresh completed successfully');
     } catch (error) {
       console.error('Error refreshing loyalty data:', error);
-      // Don't set loading to false on error to show retry option
     } finally {
       setLoading(false);
       setIsRefreshing(false);
       console.log('LoyaltyContext: Refresh finished at', new Date().toISOString());
     }
-  }, [fetchLoyaltySummary, fetchTransactions, fetchRewards, isRefreshing]);
+  }, [fetchCompanies(), , fetchTransactions, fetchRewards, isRefreshing]);
 
-  // Debounced refresh function to prevent rapid successive calls
   const debouncedRefresh = useCallback(() => {
     const timeoutId = setTimeout(() => {
       refreshLoyaltyData();
@@ -154,10 +237,8 @@ export const LoyaltyProvider = ({ children }) => {
     return () => clearTimeout(timeoutId);
   }, [refreshLoyaltyData]);
 
-  // Auto-refresh when token changes
   useEffect(() => {
     if (token) {
-      // Only refresh once when token changes, not continuously
       const initialRefresh = async () => {
         console.log('LoyaltyContext: Initial refresh triggered by token change');
         setLoading(true);
@@ -189,11 +270,12 @@ export const LoyaltyProvider = ({ children }) => {
       setTransactions([]);
       setRewards([]);
     }
-  }, [token]); // Remove refreshLoyaltyData dependency
+  }, [token]); 
 
   return (
     <LoyaltyContext.Provider value={{
       loyaltyData,
+      companies,
       transactions,
       rewards,
       loading,
